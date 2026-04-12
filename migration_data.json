@@ -1,0 +1,597 @@
+[
+  {
+    "show_name": "Show Name",
+    "show_dates": "Show Dates",
+    "move_in": "Move In Date",
+    "move_out": "Move Out Date",
+    "booth_number": "Booth Number",
+    "sales_order": "Sales Order (pls link)",
+    "show_contact": "Show Contact",
+    "notes": "NOTES",
+    "equipment": [
+      {
+        "equipment_name": "Equipment Name",
+        "serial_numbers": "SNs",
+        "part_numbers": "Item No",
+        "crate_number": "Crate #",
+        "crate_size": "Crate Size & Weight",
+        "carrier_pre": "Shipping (Preshow)",
+        "ship_date_pre": "Ship Date",
+        "carrier_post": "Shipping (Post show)",
+        "ship_date_post": "Ship Date"
+      }
+    ]
+  },
+  {
+    "show_name": "IPPE",
+    "show_dates": "January 28-30, 2025",
+    "move_in": "2025-01-26 00:00:00",
+    "move_out": "2025-01-31 00:00:00",
+    "booth_number": "C18143",
+    "sales_order": null,
+    "show_contact": "Mason",
+    "notes": "custom booth",
+    "equipment": [
+      {
+        "equipment_name": "Meat Pump",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Pipeline",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Combo",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Sanitary Conveyor",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "West Pack",
+    "show_dates": "February 4-6, 2025",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "420",
+    "sales_order": null,
+    "show_contact": "Mason",
+    "notes": "20 ' pop up booth (new)",
+    "equipment": [
+      {
+        "equipment_name": "Raptor Standalone",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Raptor Combo",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "BRC",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "IAOM Latin America",
+    "show_dates": "February 3-5, 2025",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "Table 23",
+    "sales_order": null,
+    "show_contact": "Gonzalo",
+    "notes": null,
+    "equipment": []
+  },
+  {
+    "show_name": "Food Northwest",
+    "show_dates": "March 19-20,2025",
+    "move_in": "Tue, March 18, 2025\n8:00 am - 6:00 pm",
+    "move_out": "Thursday, March 20, 2025\n4:00 pm - 10:00 pm",
+    "booth_number": "536",
+    "sales_order": "104967",
+    "show_contact": "Jake",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "Raptor Combo",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Gravity",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "Bakery Showcase",
+    "show_dates": "April 14-15, 2025",
+    "move_in": "waiting for boneyward to send info",
+    "move_out": "Tue - april 15th - 5pm",
+    "booth_number": "111",
+    "sales_order": "105283",
+    "show_contact": "Victor",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "BRC",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "Cheese Expo",
+    "show_dates": "April 15-17, 2025",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "604",
+    "sales_order": null,
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "MD Head (Bob to bring)",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "IPBS",
+    "show_dates": "April 29 - May 1, 2025",
+    "move_in": "Friday, April 25th - 11AM",
+    "move_out": "Thursday, May 1, 2025 3:00 pm \u2013 10:00 pm",
+    "booth_number": "2105",
+    "sales_order": "105433",
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "Raptor BBK",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": "system at the office",
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Gravity",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": "system at the office",
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "IAOM",
+    "show_dates": "April 29 - May 1, 2025",
+    "move_in": "Tuesday, April 29 - 10AM -4:30PM",
+    "move_out": "Thrusday May 1 - 1:30PM -5:00PM",
+    "booth_number": "309",
+    "sales_order": "105742",
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "Raptor BBK Combo",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Lab",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Gravity",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  },
+  {
+    "show_name": "Expo Pack Guadalajara",
+    "show_dates": "June 10-12, 2025",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "J-2532",
+    "sales_order": null,
+    "show_contact": "Gonzalo",
+    "notes": null,
+    "equipment": []
+  },
+  {
+    "show_name": "Food Tech Pack Tech",
+    "show_dates": "September 2-4, 2025",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "C16",
+    "sales_order": null,
+    "show_contact": "Eric",
+    "notes": null,
+    "equipment": []
+  },
+  {
+    "show_name": "IBIE",
+    "show_dates": "September 13-17, 2025",
+    "move_in": "Sept 10\n8:00 am",
+    "move_out": "Sept 20\n10:00 am",
+    "booth_number": "5419",
+    "sales_order": "107937",
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "Hospitality Crate",
+        "serial_numbers": "-",
+        "part_numbers": "-",
+        "crate_number": "1",
+        "crate_size": "1 crate \u2013 68\u201dl x 96\u201dw x 77\u201dh\n1000 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 8",
+        "carrier_post": "Hold in Vegas for PELV",
+        "ship_date_post": "Sept. 20"
+      },
+      {
+        "equipment_name": "SXS interceptor",
+        "serial_numbers": "CD31291, CC07260",
+        "part_numbers": "D-ISHR14X5S-EPBC0;\n C-V60X12BSA",
+        "crate_number": "2",
+        "crate_size": "1 crate \u2013 96\u201dl x 66\u201dw x 72\u201dh \n800 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 8",
+        "carrier_post": "Regal",
+        "ship_date_post": "Sept. 20"
+      },
+      {
+        "equipment_name": "Sanitary Conveyor*",
+        "serial_numbers": "CD32231, CC07576",
+        "part_numbers": "D-SSHR14X5S-EPB, \u00a0\nC-C60x12BSA",
+        "crate_number": "3",
+        "crate_size": "1 crate \u2013 96\u201dl x 66\u201dw x 72\u201dh \n1000 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 8",
+        "carrier_post": "Regal",
+        "ship_date_post": "Sept. 20"
+      },
+      {
+        "equipment_name": "Raptor BBK Combo",
+        "serial_numbers": "CD32288, CW00149",
+        "part_numbers": "W-RAPBBK-M-W-1625X610-RL-XX",
+        "crate_number": "4",
+        "crate_size": "1 crate \u2013 136\u201dl x 75\u201dw x 77\u201dh\n1300 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 8",
+        "carrier_post": "Hold in Vegas for PELV",
+        "ship_date_post": "Sept. 20"
+      },
+      {
+        "equipment_name": "Raptor Combo",
+        "serial_numbers": "CD32054, CW00130",
+        "part_numbers": "D-SSHR14X7S-EPH, \n\nW-RAP-M-W-CR-2405X300-RL-AB",
+        "crate_number": "5",
+        "crate_size": "1 crate - 110\u201dl x 62\u201dw x 68\u201dh \n1500 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 8",
+        "carrier_post": "Hold in Vegas for PELV",
+        "ship_date_post": "Sept. 20"
+      }
+    ]
+  },
+  {
+    "show_name": "Pack Expo Las Vegas",
+    "show_dates": "September 29 - October 1, 2025",
+    "move_in": "Thurs, Sept 25\n12:30 pm",
+    "move_out": "Fri, Oct 3\n12:30 pm",
+    "booth_number": "W-3670",
+    "sales_order": "107939",
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "ICON XR Combo",
+        "serial_numbers": "Cx01006",
+        "part_numbers": "X-ICON-G08S-X-2415X400-LR-XX",
+        "crate_number": "1",
+        "crate_size": "1 crate (XR Crate) - 85\"l x  64\"w x 92h\"",
+        "carrier_pre": "FTI",
+        "ship_date_pre": "Sept. 12",
+        "carrier_post": "FTI",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Case Unit (Vector Conveyor)*",
+        "serial_numbers": "CD32966, CC07329",
+        "part_numbers": "D-SSHR20X14S-EPB, C-V72X18BSA",
+        "crate_number": "7",
+        "crate_size": "1 crate (BRC Crate) - 67\u201dW x 98\u201dL x 72\u201dH",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Vertex",
+        "serial_numbers": "16440",
+        "part_numbers": "D-SVVC8.5W-BEH; \nS-STAND",
+        "crate_number": "6",
+        "crate_size": "1 crate - 40\"l x 44\"w x 71\"h \u2013 300 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Lab Unit*",
+        "serial_numbers": "W/ CD32982, CG01641",
+        "part_numbers": "W/ D-SSVC4S-EPH, G-L3.5X3.5-54.5FG",
+        "crate_number": "2",
+        "crate_size": "1 crate \u2013 138\u201dl x 75\u201dw x 77\u201dh \u2013 1500 lbs",
+        "carrier_pre": "Held in Vegas",
+        "ship_date_pre": null,
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Raptor BBK Combo",
+        "serial_numbers": "CW00149,  CD32288",
+        "part_numbers": "D-SSHR26X12G-EPH, W-RAPBBK-M-W-1625X610-RL-XX",
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Multi Lane",
+        "serial_numbers": "22495\nCVF-4791",
+        "part_numbers": "D-SSHR4X4S-EPBC0\nC-C60X3FG",
+        "crate_number": "10",
+        "crate_size": "1 crate - 126\u201dl x 53\u201dw x 81\u201dh  1400 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Raptor 200 Standalone",
+        "serial_numbers": "CW00012",
+        "part_numbers": "W-RAP-I-W-R-1310X200-RL-AB",
+        "crate_number": "3",
+        "crate_size": "1 crate \u2013 102\u201dl x 72\u201dw x 73\u201dh \u2013 1500 lbs",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Raptor Combo",
+        "serial_numbers": "CD32054, CW00130",
+        "part_numbers": "D-SSHR14X7S-EPH,\n \nW-RAP-M-W-CR-2405X300-RL-AB",
+        "crate_number": "4",
+        "crate_size": "1 crate - 110\u201dl x 62\u201dw x 68\u201dh \u2013 1500 lbs",
+        "carrier_pre": "Held in Vegas",
+        "ship_date_pre": null,
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Roller Ball Reject (New)",
+        "serial_numbers": "CC07914",
+        "part_numbers": "C-S43X24",
+        "crate_number": "5",
+        "crate_size": "1 crate",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Low Cost Raptor",
+        "serial_numbers": "CW00196",
+        "part_numbers": "W-FRAP-I-W-1030X300-LR-XX-L1",
+        "crate_number": "9",
+        "crate_size": "1 crate",
+        "carrier_pre": "Regal",
+        "ship_date_pre": "Sept. 22",
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      },
+      {
+        "equipment_name": "Hospitality Crate",
+        "serial_numbers": "-",
+        "part_numbers": "-",
+        "crate_number": "8",
+        "crate_size": "1 crate - 68\"L X 96\"W X 77\"H \u2013 1000 lbs",
+        "carrier_pre": "Held in Vegas",
+        "ship_date_pre": null,
+        "carrier_post": "Regal",
+        "ship_date_post": "Oct. 3"
+      }
+    ]
+  },
+  {
+    "show_name": "ADM Toronto",
+    "show_dates": "October 21- 23, 2025",
+    "move_in": "Mon, Oct 20\n8 a.m. \u2013 5 p.m.",
+    "move_out": "Thurs, Oct 23\n3 p.m. - 8 p.m.",
+    "booth_number": "1721",
+    "sales_order": "109943",
+    "show_contact": "Jake",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "ICON XR Combo",
+        "serial_numbers": "CX01006",
+        "part_numbers": "X-ICON-G08S-X-2415X400-LR-XX",
+        "crate_number": "1",
+        "crate_size": null,
+        "carrier_pre": "FTI",
+        "ship_date_pre": null,
+        "carrier_post": "FTI",
+        "ship_date_post": "Oct. 17"
+      },
+      {
+        "equipment_name": "Raptor Flex",
+        "serial_numbers": "CW00196",
+        "part_numbers": "W-FRAP-I-W-1030X300-LR-XX-L1",
+        "crate_number": "2",
+        "crate_size": null,
+        "carrier_pre": "FTI",
+        "ship_date_pre": null,
+        "carrier_post": "FTI",
+        "ship_date_post": "Oct. 17"
+      },
+      {
+        "equipment_name": "INTERCEPTOR BRC",
+        "serial_numbers": "22653, CVF-5209",
+        "part_numbers": "CVF-5209, C-V60X12AB",
+        "crate_number": "3",
+        "crate_size": null,
+        "carrier_pre": "FTI",
+        "ship_date_pre": null,
+        "carrier_post": "FTI",
+        "ship_date_post": "Oct. 17"
+      }
+    ]
+  },
+  {
+    "show_name": "The Almond Conference",
+    "show_dates": "TBA",
+    "move_in": null,
+    "move_out": null,
+    "booth_number": "TBA",
+    "sales_order": null,
+    "show_contact": "Mason",
+    "notes": null,
+    "equipment": [
+      {
+        "equipment_name": "Raptor BBK Combo",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      },
+      {
+        "equipment_name": "Gravity",
+        "serial_numbers": null,
+        "part_numbers": null,
+        "crate_number": null,
+        "crate_size": null,
+        "carrier_pre": null,
+        "ship_date_pre": null,
+        "carrier_post": null,
+        "ship_date_post": null
+      }
+    ]
+  }
+]
