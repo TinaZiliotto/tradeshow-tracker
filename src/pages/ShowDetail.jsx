@@ -9,12 +9,21 @@ import CratesTab from '../components/tabs/CratesTab'
 import ShippingTab from '../components/tabs/ShippingTab'
 import SuppliesTab from '../components/tabs/SuppliesTab'
 import FilesTab from '../components/tabs/FilesTab'
+import PortalTab from '../components/tabs/PortalTab'
 
-const TABS = ['Equipment', 'Crates', 'Shipping', 'Supplies', 'Files']
+const TABS = ['Equipment', 'Crates', 'Shipping', 'Supplies', 'Files', 'Portal']
+
+const STATUS_BADGE = {
+  Confirmed:    'badge-blue',
+  TBA:          'badge-amber',
+  Cancelled:    'badge-red',
+  Completed:    'badge-green',
+  'In Progress':'badge-purple',
+  Finished:     'badge-grey',
+}
 
 function statusBadge(status) {
-  const map = { Confirmed: 'badge-blue', TBA: 'badge-amber', Cancelled: 'badge-red', Completed: 'badge-green' }
-  return <span className={`badge ${map[status] || 'badge-grey'}`}>{status || 'Unknown'}</span>
+  return <span className={`badge ${STATUS_BADGE[status] || 'badge-grey'}`}>{status || 'Unknown'}</span>
 }
 
 function InfoPair({ label, value }) {
@@ -84,8 +93,7 @@ export default function ShowDetail() {
       </div>
 
       <div className="page-body">
-        {/* Show info card */}
-        <div className="card card-body mb-4" style={{ marginBottom: '20px' }}>
+        <div className="card card-body" style={{ marginBottom: '20px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
             <InfoPair label="Booth Number" value={show.booth_number} />
             <InfoPair label="Sales Order" value={show.sales_order} />
@@ -96,7 +104,6 @@ export default function ShowDetail() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="tabs">
           {TABS.map(tab => (
             <button key={tab} className={`tab ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
@@ -110,6 +117,7 @@ export default function ShowDetail() {
         {activeTab === 'Shipping'  && <ShippingTab  showId={id} isAdmin={isAdmin} />}
         {activeTab === 'Supplies'  && <SuppliesTab  showId={id} isAdmin={isAdmin} />}
         {activeTab === 'Files'     && <FilesTab     showId={id} showName={show.show_name} />}
+        {activeTab === 'Portal'    && <PortalTab    showId={id} />}
       </div>
 
       {editing && (

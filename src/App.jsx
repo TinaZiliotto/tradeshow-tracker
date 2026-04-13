@@ -8,6 +8,7 @@ import ShowDetail from './pages/ShowDetail'
 import Equipment from './pages/Equipment'
 import AuditLog from './pages/AuditLog'
 import Settings from './pages/Settings'
+import Admin from './pages/Admin'
 
 function ProtectedLayout() {
   const { user, loading } = useAuth()
@@ -22,12 +23,21 @@ function ProtectedLayout() {
           <Route path="/shows"      element={<Shows />} />
           <Route path="/shows/:id"  element={<ShowDetail />} />
           <Route path="/equipment"  element={<Equipment />} />
-          <Route path="/audit"      element={<AuditLog />} />
-          <Route path="/settings"   element={<Settings />} />
+          <Route path="/admin"      element={<AdminGuard />} />
+          <Route path="/audit"      element={<AdminGuard page="audit" />} />
+          <Route path="/settings"   element={<AdminGuard page="settings" />} />
         </Routes>
       </main>
     </div>
   )
+}
+
+function AdminGuard({ page }) {
+  const { isAdmin } = useAuth()
+  if (!isAdmin) return <Navigate to="/" replace />
+  if (page === 'audit') return <AuditLog />
+  if (page === 'settings') return <Settings />
+  return <Admin />
 }
 
 function PublicRoute({ children }) {
