@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Eye, EyeOff, ExternalLink, KeyRound } from 'lucide-react'
+import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase, logAudit } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
@@ -122,6 +123,7 @@ function PortalCard({ entry, isAdmin, onEdit, onDelete }) {
 }
 
 export default function PortalTab({ showId }) {
+  const tick = useRefreshTick()
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

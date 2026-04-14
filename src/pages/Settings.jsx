@@ -71,6 +71,7 @@ function DropSection({ category, label, desc }) {
 }
 
 function InviteModal({ onClose, onSaved }) {
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('viewer')
@@ -79,17 +80,19 @@ function InviteModal({ onClose, onSaved }) {
 
   async function handleSave(e) {
     e.preventDefault(); setSaving(true); setError('')
-    // Create user via Supabase Admin API (service role needed — this calls the REST API)
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ email, password, email_confirm: true })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName.trim() } }
     })
-    const data = await res.json()
-    if (!res.ok) { setError(data.message || 'Failed to create user'); setSaving(false); return }
-    // Set role
-    await supabase.from('profiles').update({ role }).eq('id', data.id)
+    if (error) { setError(error.message); setSaving(false); return }
+    if (!data?.user) { setError('User creation failed — check Supabase auth settings.'); setSaving(false); return }
+    // Allow trigger to fire then update role + name
+    await new Promise(r => setTimeout(r, 1000))
+    const { error: profileErr } = await supabase.from('profiles')
+      .update({ role, full_name: fullName.trim() })
+      .eq('id', data.user.id)
+    if (profileErr) console.error('Profile update error:', profileErr)
     onSaved()
   }
 
@@ -99,7 +102,8 @@ function InviteModal({ onClose, onSaved }) {
         <div className="modal-hd"><h2 className="modal-title">Create New User</h2><button className="btn btn-ghost btn-sm" onClick={onClose}><X size={15} /></button></div>
         <form onSubmit={handleSave}>
           <div className="modal-bd" style={{ display:'flex', flexDirection:'column', gap:13 }}>
-            <div className="field"><label className="lbl">Email *</label><input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoFocus /></div>
+            <div className="field"><label className="lbl">Full Name *</label><input className="input" type="text" value={fullName} onChange={e=>setFullName(e.target.value)} required autoFocus placeholder="e.g. Steve Mason" /></div>
+            <div className="field"><label className="lbl">Email *</label><input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required /></div>
             <div className="field"><label className="lbl">Password *</label><input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="min. 6 characters" /></div>
             <div className="field"><label className="lbl">Role</label>
               <select className="sel" value={role} onChange={e=>setRole(e.target.value)}>
@@ -135,21 +139,24 @@ function UsersSection() {
   async function toggleRole(user) {
     const newRole = user.role === 'admin' ? 'viewer' : 'admin'
     if (!confirm(`Change ${user.full_name || user.id}'s role to "${newRole}"?`)) return
-    await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
-    fetchUsers()
+    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
+    if (error) { alert(`Failed to update role: ${error.message}`); return }
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u))
   }
 
   async function toggleSuspend(user) {
     const suspend = !user.suspended
     if (!confirm(`${suspend ? 'Suspend' : 'Reactivate'} this user?`)) return
-    await supabase.from('profiles').update({ suspended: suspend }).eq('id', user.id)
-    fetchUsers()
+    const { error } = await supabase.from('profiles').update({ suspended: suspend }).eq('id', user.id)
+    if (error) { alert(`Failed to update: ${error.message}`); return }
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, suspended: suspend } : u))
   }
 
   async function deleteUser(user) {
     if (!confirm(`Permanently delete user "${user.full_name || user.id}"? This cannot be undone.`)) return
-    await supabase.from('profiles').delete().eq('id', user.id)
-    fetchUsers()
+    const { error } = await supabase.from('profiles').delete().eq('id', user.id)
+    if (error) { alert(`Failed to delete: ${error.message}`); return }
+    setUsers(prev => prev.filter(u => u.id !== user.id))
   }
 
   return (

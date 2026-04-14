@@ -26,11 +26,18 @@ export default function Sidebar() {
 
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
+      {/* Logo area - same image, different size */}
       <div className="sb-logo">
         <img
-          src="/logo.png"
-          alt="Fortress"
-          style={{ height: open ? 44 : 32, width: 'auto', objectFit: 'contain', transition: 'height 180ms ease' }}
+          src="/logo_full.png"
+          alt="Fortress Technology"
+          style={{
+            height: open ? 40 : 28,
+            width: 'auto',
+            maxWidth: open ? 160 : 36,
+            objectFit: 'contain',
+            transition: 'all 180ms ease',
+          }}
         />
       </div>
 

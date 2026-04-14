@@ -29,18 +29,21 @@ export default function Login() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
-          <div style={{ background: 'var(--purple)', borderRadius: 16, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/logo.png" alt="Fortress Technology" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+        {/* Logo on purple bg */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+          <div style={{ background: 'var(--purple)', borderRadius: 14, padding: '18px 32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src="/logo_full.png"
+              alt="Fortress Technology"
+              style={{ height: 52, width: 'auto', maxWidth: 200, objectFit: 'contain' }}
+            />
           </div>
         </div>
 
-        {/* Card */}
         <div className="card" style={{ padding: 28 }}>
           {mode === 'login' ? (
             <>
-              <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Sign in</h1>
+              <h1 style={{ fontSize: 19, fontWeight: 600, marginBottom: 4 }}>Sign in</h1>
               <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Tradeshow Tracker — Fortress Technology</p>
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 <div className="field">
@@ -70,7 +73,7 @@ export default function Login() {
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, marginBottom: 16, padding: 0 }}>
                 ← Back to sign in
               </button>
-              <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Reset password</h1>
+              <h1 style={{ fontSize: 19, fontWeight: 600, marginBottom: 4 }}>Reset password</h1>
               <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>We'll send a reset link to your email.</p>
               {resetSent ? (
                 <div className="info-box">Reset link sent to <strong>{email}</strong>. Check your inbox.</div>

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Search, Package, Upload, Eye, Download, FileText, Image, File, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Search, Package, Upload, Eye, Download, FileText, Image, File, ChevronDown, ChevronUp, Paperclip, ArrowUp, ArrowDown } from 'lucide-react'
+import { useRefreshTick } from '../context/RefreshContext'
 import { supabase, logAudit } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const BUCKET = 'tradeshow-files'
 
-// ─── File helpers ────────────────────────────────────────────
 function fileIcon(mime) {
   if (!mime) return <File size={15} className="muted" />
   if (mime.startsWith('image/')) return <Image size={15} style={{ color: 'var(--accent)' }} />
@@ -18,7 +18,6 @@ function fmtBytes(b) {
   return `${(b / 1048576).toFixed(1)} MB`
 }
 
-// ─── Preview modal ───────────────────────────────────────────
 function PreviewModal({ file, url, onClose }) {
   return (
     <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -42,7 +41,6 @@ function PreviewModal({ file, url, onClose }) {
   )
 }
 
-// ─── System files section (inline inside row expand) ─────────
 function SystemFiles({ systemId, systemName, isAdmin }) {
   const [files, setFiles] = useState([])
   const [loading, setLoading] = useState(true)
@@ -55,12 +53,10 @@ function SystemFiles({ systemId, systemName, isAdmin }) {
 
   async function fetchFiles() {
     const { data } = await supabase.from('files')
-      .select('*')
-      .eq('entity_type', 'system')
-      .eq('entity_id', systemId)
+      .select('id, file_name, storage_path, mime_type, size_bytes, uploaded_at, uploader_email')
+      .eq('entity_type', 'system').eq('entity_id', systemId)
       .order('uploaded_at', { ascending: false })
-    setFiles(data || [])
-    setLoading(false)
+    setFiles(data || []); setLoading(false)
   }
 
   async function handleUpload(fileList) {
@@ -70,12 +66,12 @@ function SystemFiles({ systemId, systemName, isAdmin }) {
       const path = `systems/${systemId}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       const { error } = await supabase.storage.from(BUCKET).upload(path, f)
       if (error) { console.error(error); continue }
-      const { data: rec } = await supabase.from('files').insert({
+      await supabase.from('files').insert({
         entity_type: 'system', entity_id: systemId,
         file_name: f.name, storage_path: path,
-        mime_type: f.type, size_bytes: f.size, uploaded_by: user.id,
-      }).select().single()
-      await logAudit({ action: 'upload', entityType: 'file', entityId: rec?.id, entityLabel: f.name, newValue: { system: systemName, file: f.name } })
+        mime_type: f.type, size_bytes: f.size,
+        uploaded_by: user.id, uploader_email: user.email,
+      })
     }
     setUploading(false)
     fetchFiles()
@@ -116,7 +112,6 @@ function SystemFiles({ systemId, systemName, isAdmin }) {
           </button>
         </div>
       </div>
-
       {loading ? <span className="spin" /> : files.length === 0 ? (
         <p className="muted" style={{ fontSize: 13 }}>No files attached to this system yet.</p>
       ) : (
@@ -128,22 +123,20 @@ function SystemFiles({ systemId, systemName, isAdmin }) {
               <span className="muted" style={{ fontSize: 11, flexShrink: 0 }}>{fmtBytes(file.size_bytes)}</span>
               <div className="row gap-1">
                 {(file.mime_type?.startsWith('image/') || file.mime_type === 'application/pdf') && (
-                  <button className="btn btn-ghost btn-sm" onClick={() => handlePreview(file)} title="Preview"><Eye size={12} /></button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => handlePreview(file)}><Eye size={12} /></button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={() => handleDownload(file)} title="Download"><Download size={12} /></button>
-                {isAdmin && <button className="btn btn-ghost btn-sm danger" onClick={() => handleDelete(file)} title="Delete"><Trash2 size={12} /></button>}
+                <button className="btn btn-ghost btn-sm" onClick={() => handleDownload(file)}><Download size={12} /></button>
+                {isAdmin && <button className="btn btn-ghost btn-sm danger" onClick={() => handleDelete(file)}><Trash2 size={12} /></button>}
               </div>
             </div>
           ))}
         </div>
       )}
-
       {preview && <PreviewModal file={preview.file} url={preview.url} onClose={() => setPreview(null)} />}
     </div>
   )
 }
 
-// ─── Add/Edit System form ────────────────────────────────────
 function SystemForm({ item, equipmentNames, onClose, onSaved }) {
   const isEdit = !!item
   const [form, setForm] = useState({
@@ -192,18 +185,9 @@ function SystemForm({ item, equipmentNames, onClose, onSaved }) {
                   {equipmentNames.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
-              <div className="field">
-                <label className="lbl">Serial Number *</label>
-                <input className="input" value={form.serial_number} onChange={set('serial_number')} required placeholder="e.g. CD32054" />
-              </div>
-              <div className="field">
-                <label className="lbl">Part Number</label>
-                <input className="input" value={form.part_number} onChange={set('part_number')} placeholder="e.g. D-SSHR14X7S-EPH" />
-              </div>
-              <div className="field">
-                <label className="lbl">Crate Number</label>
-                <input className="input" value={form.crate_number} onChange={set('crate_number')} />
-              </div>
+              <div className="field"><label className="lbl">Serial Number *</label><input className="input" value={form.serial_number} onChange={set('serial_number')} required placeholder="e.g. CD32054" /></div>
+              <div className="field"><label className="lbl">Part Number</label><input className="input" value={form.part_number} onChange={set('part_number')} placeholder="e.g. D-SSHR14X7S-EPH" /></div>
+              <div className="field"><label className="lbl">Crate Number</label><input className="input" value={form.crate_number} onChange={set('crate_number')} /></div>
               <div className="field">
                 <label className="lbl">Current Location</label>
                 <select className="sel" value={form.location} onChange={set('location')}>
@@ -212,26 +196,11 @@ function SystemForm({ item, equipmentNames, onClose, onSaved }) {
                   <option value="At the Show">At the Show</option>
                 </select>
               </div>
-              <div className="field">
-                <label className="lbl">Dimensions</label>
-                <input className="input" value={form.dimensions} onChange={set('dimensions')} placeholder='e.g. 96"L x 66"W' />
-              </div>
-              <div className="field fspan">
-                <label className="lbl">Notes</label>
-                <textarea className="ta" value={form.notes} onChange={set('notes')} rows={2} />
-              </div>
+              <div className="field"><label className="lbl">Dimensions</label><input className="input" value={form.dimensions} onChange={set('dimensions')} placeholder='e.g. 96"L x 66"W' /></div>
+              <div className="field fspan"><label className="lbl">Notes</label><textarea className="ta" value={form.notes} onChange={set('notes')} rows={2} /></div>
             </div>
             {error && <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
-            {isEdit && (
-              <div className="info-box">
-                After saving, use the <strong>Files</strong> row expander in the table to upload drawings, PDFs, or images for this system.
-              </div>
-            )}
-            {!isEdit && (
-              <div className="info-box">
-                After creating the system, expand its row in the table to upload files (drawings, PDFs, images).
-              </div>
-            )}
+            <div className="info-box">After saving, expand the system row in the table to upload drawings, PDFs, or images.</div>
           </div>
           <div className="modal-ft">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
@@ -245,13 +214,23 @@ function SystemForm({ item, equipmentNames, onClose, onSaved }) {
   )
 }
 
-// ─── Main Systems page ───────────────────────────────────────
+function SortIcon({ col, sortCol, dir }) {
+  if (sortCol !== col) return <ArrowUp size={11} style={{ opacity: 0.25, marginLeft: 3 }} />
+  return dir === 'asc'
+    ? <ArrowUp size={11} style={{ color: 'var(--purple)', marginLeft: 3 }} />
+    : <ArrowDown size={11} style={{ color: 'var(--purple)', marginLeft: 3 }} />
+}
+
 export default function Systems() {
+  const tick = useRefreshTick()
   const [systems, setSystems] = useState([])
   const [equipmentNames, setEquipmentNames] = useState([])
+  const [fileCounts, setFileCounts] = useState({}) // { systemId: count }
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [locationFilter, setLocationFilter] = useState('all')
+  const [sortCol, setSortCol] = useState('equipment_name')
+  const [sortDir, setSortDir] = useState('asc')
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
@@ -259,12 +238,21 @@ export default function Systems() {
 
   const LOCATIONS = ['Regal', 'Head Office (HO)', 'At the Show']
 
-  useEffect(() => { fetchSystems(); fetchNames() }, [])
+  useEffect(() => { fetchSystems(); fetchNames() }, [tick])
 
   async function fetchSystems() {
-    const { data } = await supabase.from('systems').select('*').order('equipment_name').order('serial_number')
+    const { data } = await supabase.from('systems').select('*')
     setSystems(data || [])
     setLoading(false)
+    // Load file counts for all systems
+    if (data?.length) {
+      const ids = data.map(s => s.id)
+      const { data: files } = await supabase.from('files')
+        .select('entity_id').eq('entity_type', 'system').in('entity_id', ids)
+      const counts = {}
+      files?.forEach(f => { counts[f.entity_id] = (counts[f.entity_id] || 0) + 1 })
+      setFileCounts(counts)
+    }
   }
 
   async function fetchNames() {
@@ -273,17 +261,30 @@ export default function Systems() {
   }
 
   async function handleDelete(item) {
-    if (!confirm(`Delete system "${item.equipment_name} (${item.serial_number})"? This cannot be undone.`)) return
+    if (!confirm(`Delete "${item.equipment_name} (${item.serial_number})"?`)) return
     await supabase.from('systems').delete().eq('id', item.id)
     await logAudit({ action: 'delete', entityType: 'system', entityId: item.id, entityLabel: item.equipment_name })
     fetchSystems()
   }
 
-  const filtered = systems.filter(s => {
-    const q = search.toLowerCase()
-    return (!q || s.equipment_name?.toLowerCase().includes(q) || s.serial_number?.toLowerCase().includes(q) || s.part_number?.toLowerCase().includes(q))
-      && (locationFilter === 'all' || s.location === locationFilter)
-  })
+  function toggleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+
+  const filtered = systems
+    .filter(s => {
+      const q = search.toLowerCase()
+      return (!q || s.equipment_name?.toLowerCase().includes(q) || s.serial_number?.toLowerCase().includes(q) || s.part_number?.toLowerCase().includes(q))
+        && (locationFilter === 'all' || s.location === locationFilter)
+    })
+    .sort((a, b) => {
+      const va = (sortCol === 'serial_number' ? a.serial_number : a.equipment_name) || ''
+      const vb = (sortCol === 'serial_number' ? b.serial_number : b.equipment_name) || ''
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
 
   const locBadge = loc => {
     if (loc === 'At the Show') return <span className="badge b-green">{loc}</span>
@@ -328,12 +329,17 @@ export default function Systems() {
                 <thead>
                   <tr>
                     <th style={{ width: 32 }}></th>
-                    <th>Equipment</th>
-                    <th>Serial Number</th>
+                    <th className="sortable" onClick={() => toggleSort('equipment_name')}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>Equipment <SortIcon col="equipment_name" sortCol={sortCol} dir={sortDir} /></span>
+                    </th>
+                    <th className="sortable" onClick={() => toggleSort('serial_number')}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>Serial Number <SortIcon col="serial_number" sortCol={sortCol} dir={sortDir} /></span>
+                    </th>
                     <th>Part Number</th>
                     <th>Crate</th>
                     <th>Dimensions</th>
                     <th>Location</th>
+                    <th title="Has file attachments">Attachments</th>
                     {isAdmin && <th></th>}
                   </tr>
                 </thead>
@@ -350,6 +356,14 @@ export default function Systems() {
                         <td className="muted">{s.crate_number || '—'}</td>
                         <td className="muted">{s.dimensions || '—'}</td>
                         <td>{locBadge(s.location)}</td>
+                        <td>
+                          {fileCounts[s.id] > 0 && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--purple)', fontSize: 12 }}>
+                              <Paperclip size={13} />
+                              <span>{fileCounts[s.id]}</span>
+                            </span>
+                          )}
+                        </td>
                         {isAdmin && (
                           <td onClick={e => e.stopPropagation()}>
                             <div className="row gap-2">
@@ -361,8 +375,12 @@ export default function Systems() {
                       </tr>
                       {expandedId === s.id && (
                         <tr key={`${s.id}-files`}>
-                          <td colSpan={isAdmin ? 8 : 7} style={{ padding: 0, border: 'none' }}>
-                            <SystemFiles systemId={s.id} systemName={`${s.equipment_name} (${s.serial_number})`} isAdmin={isAdmin} />
+                          <td colSpan={isAdmin ? 9 : 8} style={{ padding: 0, border: 'none' }}>
+                            <SystemFiles
+                              systemId={s.id}
+                              systemName={`${s.equipment_name} (${s.serial_number})`}
+                              isAdmin={isAdmin}
+                            />
                           </td>
                         </tr>
                       )}

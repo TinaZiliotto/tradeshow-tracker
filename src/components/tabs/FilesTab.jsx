@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Upload, Trash2, Eye, Download, X, FileText, Image, File } from 'lucide-react'
+import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase, logAudit } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
@@ -11,18 +12,16 @@ function fileIcon(mime) {
   if (mime === 'application/pdf') return <FileText size={16} style={{ color: 'var(--red)' }} />
   return <File size={16} className="muted" />
 }
-
 function fmtBytes(b) {
   if (!b) return ''
-  if (b < 1024) return `${b} B`
-  if (b < 1048576) return `${(b/1024).toFixed(1)} KB`
-  return `${(b/1048576).toFixed(1)} MB`
+  if (b < 1048576) return `${(b / 1024).toFixed(1)} KB`
+  return `${(b / 1048576).toFixed(1)} MB`
 }
 
 function PreviewModal({ file, url, onClose }) {
   return (
     <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal modal-lg" style={{ maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="modal modal-lg" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-hd" style={{ flexShrink: 0 }}>
           <h2 className="modal-title" style={{ fontSize: 13, fontWeight: 500 }}>{file.file_name}</h2>
           <div className="row gap-2">
@@ -34,7 +33,7 @@ function PreviewModal({ file, url, onClose }) {
           {file.mime_type?.startsWith('image/') ? (
             <img src={url} alt={file.file_name} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
           ) : file.mime_type === 'application/pdf' ? (
-            <iframe src={url} title={file.file_name} style={{ width: '100%', height: '64vh', border: 'none', borderRadius: 8 }} />
+            <iframe src={url} title={file.file_name} style={{ width: '100%', height: '62vh', border: 'none', borderRadius: 8 }} />
           ) : null}
         </div>
       </div>
@@ -43,6 +42,7 @@ function PreviewModal({ file, url, onClose }) {
 }
 
 export default function FilesTab({ showId, showName }) {
+  const tick = useRefreshTick()
   const [files, setFiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -54,10 +54,15 @@ export default function FilesTab({ showId, showName }) {
   useEffect(() => { fetchFiles() }, [showId])
 
   async function fetchFiles() {
-    const { data } = await supabase.from('files')
-      .select('*, uploader:uploaded_by(email)')
-      .eq('entity_type', 'tradeshow').eq('entity_id', showId)
+    // Do NOT join on uploader — auth.users is not accessible via anon key
+    // uploader_email is stored directly in the files row
+    const { data, error } = await supabase
+      .from('files')
+      .select('id, file_name, storage_path, mime_type, size_bytes, uploaded_at, uploader_email')
+      .eq('entity_type', 'tradeshow')
+      .eq('entity_id', showId)
       .order('uploaded_at', { ascending: false })
+    if (error) console.error('Files fetch error:', error)
     setFiles(data || [])
     setLoading(false)
   }
@@ -67,9 +72,19 @@ export default function FilesTab({ showId, showName }) {
     setUploading(true)
     for (const f of Array.from(fileList)) {
       const path = `${showId}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      const { error } = await supabase.storage.from(BUCKET).upload(path, f)
-      if (error) { console.error(error); continue }
-      const { data: rec } = await supabase.from('files').insert({ entity_type: 'tradeshow', entity_id: showId, file_name: f.name, storage_path: path, mime_type: f.type, size_bytes: f.size, uploaded_by: user.id }).select().single()
+      const { error: storageErr } = await supabase.storage.from(BUCKET).upload(path, f)
+      if (storageErr) { console.error('Storage upload error:', storageErr); continue }
+      const { data: rec, error: dbErr } = await supabase.from('files').insert({
+        entity_type: 'tradeshow',
+        entity_id: showId,
+        file_name: f.name,
+        storage_path: path,
+        mime_type: f.type,
+        size_bytes: f.size,
+        uploaded_by: user.id,
+        uploader_email: user.email,  // store email directly — no join needed
+      }).select().single()
+      if (dbErr) console.error('DB insert error:', dbErr)
       await logAudit({ action: 'upload', entityType: 'file', entityId: rec?.id, entityLabel: f.name, newValue: { show: showName, file: f.name } })
     }
     setUploading(false)
@@ -129,7 +144,7 @@ export default function FilesTab({ showId, showName }) {
                   <tr key={file.id}>
                     <td><div className="row gap-2">{fileIcon(file.mime_type)}<span style={{ fontWeight: 500 }}>{file.file_name}</span></div></td>
                     <td className="muted">{fmtBytes(file.size_bytes)}</td>
-                    <td className="muted">{file.uploader?.email || '—'}</td>
+                    <td className="muted">{file.uploader_email || '—'}</td>
                     <td className="muted">{new Date(file.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td>
                       <div className="row gap-2">

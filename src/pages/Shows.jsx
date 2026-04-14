@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
+import { useRefreshTick } from '../context/RefreshContext'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import ShowModal from '../components/ShowModal'
@@ -14,6 +15,7 @@ function SortIcon({ col, sortCol, dir }) {
 }
 
 export default function Shows() {
+  const tick = useRefreshTick()
   const [shows, setShows] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -24,7 +26,7 @@ export default function Shows() {
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => { fetchShows() }, [])
+  useEffect(() => { fetchShows() }, [tick])
 
   async function fetchShows() {
     const { data } = await supabase.from('tradeshows').select('*')

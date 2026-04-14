@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Package, Truck, ArrowRight } from 'lucide-react'
+import { useRefreshTick } from '../context/RefreshContext'
 import { supabase } from '../lib/supabase'
 
 const SB = { Confirmed:'b-blue', TBA:'b-amber', Cancelled:'b-red', Completed:'b-green', 'In Progress':'b-purple', Finished:'b-grey' }
 function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
 
 export default function Dashboard() {
+  const tick = useRefreshTick()
   const [shows, setShows] = useState([])
   const [systems, setSystems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -21,7 +23,7 @@ export default function Dashboard() {
       setSystems(sys || [])
       setLoading(false)
     })
-  }, [])
+  }, [tick])
 
   const now = new Date()
   const upcoming = shows.filter(s => s.dates_start && new Date(s.dates_start + 'T00:00:00') >= now)

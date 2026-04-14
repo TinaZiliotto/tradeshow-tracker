@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Package } from 'lucide-react'
+import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase } from '../../lib/supabase'
 
 export default function EquipmentTab({ showId }) {
+  const tick = useRefreshTick()
   const [systems, setSystems] = useState([])
   const [loading, setLoading] = useState(true)
 

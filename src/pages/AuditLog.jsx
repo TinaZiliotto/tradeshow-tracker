@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
+import { useRefreshTick } from '../context/RefreshContext'
 import { supabase } from '../lib/supabase'
 
 const ACTION_BADGE = { create: 'b-green', update: 'b-blue', delete: 'b-red', upload: 'b-amber' }
@@ -12,6 +13,7 @@ function summarizeChanges(oldVal, newVal) {
 }
 
 export default function AuditLog() {
+  const tick = useRefreshTick()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -20,7 +22,7 @@ export default function AuditLog() {
   useEffect(() => {
     supabase.from('audit_log').select('*').order('timestamp', { ascending: false }).limit(500)
       .then(({ data }) => { setLogs(data || []); setLoading(false) })
-  }, [])
+  }, [tick])
 
   const filtered = logs.filter(log => {
     const q = search.toLowerCase()

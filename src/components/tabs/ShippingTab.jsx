@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
+import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase, logAudit } from '../../lib/supabase'
 
 function ShipForm({ showId, item, onClose, onSaved }) {
@@ -74,6 +75,7 @@ function ShipSection({ title, rows, isAdmin, onEdit, onDelete }) {
 }
 
 export default function ShippingTab({ showId, isAdmin }) {
+  const tick = useRefreshTick()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

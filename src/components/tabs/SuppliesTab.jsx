@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase } from '../../lib/supabase'
 
 const SUPPLY_SECTIONS = [
@@ -10,6 +11,7 @@ const SUPPLY_SECTIONS = [
 ]
 
 export default function SuppliesTab({ showId, isAdmin }) {
+  const tick = useRefreshTick()
   const [data, setData] = useState({})   // { category: [{item, quantity, id?}] }
   const [masterLists, setMasterLists] = useState({})
   const [loading, setLoading] = useState(true)

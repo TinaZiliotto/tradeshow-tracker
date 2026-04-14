@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { useRefreshTick } from '../context/RefreshContext'
 import { supabase, logAudit } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import ShowModal from '../components/ShowModal'
@@ -10,19 +11,19 @@ import SuppliesTab   from '../components/tabs/SuppliesTab'
 import BrochuresTab  from '../components/tabs/BrochuresTab'
 import FilesTab      from '../components/tabs/FilesTab'
 import PortalTab     from '../components/tabs/PortalTab'
+import ChecklistTab  from '../components/tabs/ChecklistTab'
 
-// Crates tab is removed per V4 requirements
-const TABS = ['Systems', 'Shipping', 'Supplies', 'Brochures', 'Files', 'Portal']
-
+const TABS = ['Systems', 'Shipping', 'Supplies', 'Brochures', 'Files', 'Portal', 'Checklist']
 const SB = { Confirmed:'b-blue', TBA:'b-amber', Cancelled:'b-red', Completed:'b-green', 'In Progress':'b-purple', Finished:'b-grey' }
-function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
 
+function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
 function Pair({ label, value }) {
   if (!value) return null
-  return <div><div className="lbl" style={{ marginBottom:2 }}>{label}</div><div style={{ fontSize:13, whiteSpace:'pre-line' }}>{value}</div></div>
+  return <div><div className="lbl" style={{ marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13, whiteSpace: 'pre-line' }}>{value}</div></div>
 }
 
 export default function ShowDetail() {
+  const tick = useRefreshTick()
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
@@ -32,7 +33,7 @@ export default function ShowDetail() {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => { fetchShow() }, [id])
+  useEffect(() => { fetchShow() }, [id, tick])
 
   async function fetchShow() {
     const { data } = await supabase.from('tradeshows').select('*').eq('id', id).single()
@@ -62,7 +63,7 @@ export default function ShowDetail() {
             </div>
             <p className="page-sub">
               {show.dates_start
-                ? `${new Date(show.dates_start + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric' })} – ${show.dates_end ? new Date(show.dates_end + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '?'}`
+                ? `${new Date(show.dates_start + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${show.dates_end ? new Date(show.dates_end + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '?'}`
                 : 'Dates TBA'}
             </p>
           </div>
@@ -77,7 +78,7 @@ export default function ShowDetail() {
 
       <div className="page-body">
         <div className="card card-bd" style={{ marginBottom: 18 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(170px, 1fr))', gap:18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 18 }}>
             <Pair label="Booth Number"  value={show.booth_number} />
             <Pair label="Sales Order"   value={show.sales_order} />
             <Pair label="Show Contact"  value={show.show_contact} />
@@ -97,6 +98,7 @@ export default function ShowDetail() {
         {tab === 'Brochures' && <BrochuresTab  showId={id} isAdmin={isAdmin} />}
         {tab === 'Files'     && <FilesTab      showId={id} showName={show.show_name} />}
         {tab === 'Portal'    && <PortalTab     showId={id} />}
+        {tab === 'Checklist' && <ChecklistTab  showId={id} />}
       </div>
 
       {editing && <ShowModal show={show} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); fetchShow() }} />}
