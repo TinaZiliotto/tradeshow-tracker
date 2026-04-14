@@ -3,16 +3,15 @@ import { X } from 'lucide-react'
 import { supabase, logAudit } from '../lib/supabase'
 import SystemPicker from './SystemPicker'
 
-const STATUSES = ['Confirmed', 'TBA', 'In Progress', 'Completed', 'Finished', 'Cancelled']
-
 export default function ShowModal({ show, onClose, onSaved }) {
   const isEdit = !!show
   const [contacts, setContacts] = useState([])
+  const [statuses, setStatuses] = useState([])
   const [selectedSystems, setSelectedSystems] = useState([])
   const [form, setForm] = useState({
     show_name:    show?.show_name    || '',
     year:         show?.year         || new Date().getFullYear(),
-    status:       show?.status       || 'Confirmed',
+    status:       show?.status       || '',
     booth_number: show?.booth_number || '',
     sales_order:  show?.sales_order  || '',
     show_contact: show?.show_contact || '',
@@ -27,8 +26,16 @@ export default function ShowModal({ show, onClose, onSaved }) {
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))
 
   useEffect(() => {
+    // Load contacts and statuses from database — never hardcoded
     supabase.from('dropdown_options').select('value').eq('category', 'contact').order('sort_order')
       .then(({ data }) => setContacts(data?.map(d => d.value) || []))
+    supabase.from('dropdown_options').select('value').eq('category', 'show_status').order('sort_order')
+      .then(({ data }) => {
+        const vals = data?.map(d => d.value) || []
+        setStatuses(vals)
+        // Set default status to first option if creating a new show
+        if (!isEdit && vals.length > 0) setForm(p => ({ ...p, status: vals[0] }))
+      })
     if (isEdit) {
       supabase.from('show_systems').select('system_id, systems(*)').eq('tradeshow_id', show.id)
         .then(({ data }) => { if (data) setSelectedSystems(data.map(r => r.systems).filter(Boolean)) })
@@ -81,7 +88,8 @@ export default function ShowModal({ show, onClose, onSaved }) {
               <div className="field">
                 <label className="lbl">Status</label>
                 <select className="sel" value={form.status} onChange={set('status')}>
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="">— Select —</option>
+                  {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div className="field fspan"><label className="lbl">Move In Details</label><textarea className="ta" value={form.move_in} onChange={set('move_in')} rows={2} /></div>

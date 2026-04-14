@@ -27,41 +27,21 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Left — brand panel */}
-      <div style={{
-        width: 420, flexShrink: 0, background: 'var(--purple)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: '48px 40px',
-      }}>
-        <img
-          src="/fortress_full_logo.png"
-          alt="Fortress Technology"
-          style={{ width: 220, height: 'auto', objectFit: 'contain', marginBottom: 36 }}
-        />
-        <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 600, textAlign: 'center', marginBottom: 10, letterSpacing: -0.3 }}>
-          Tradeshow Tracker
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, textAlign: 'center', lineHeight: 1.7 }}>
-          Centralized portal for managing tradeshow events, systems, shipping and supplies.
-        </p>
-        <div style={{ marginTop: 'auto', paddingTop: 32, borderTop: '1px solid rgba(255,255,255,0.1)', width: '100%', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
-            Need access? Contact your administrator.
-          </p>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+          <div style={{ background: 'var(--purple)', borderRadius: 16, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/logo.png" alt="Fortress Technology" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+          </div>
         </div>
-      </div>
 
-      {/* Right — form panel */}
-      <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 40, background: 'var(--bg)',
-      }}>
-        <div style={{ width: '100%', maxWidth: 360 }}>
+        {/* Card */}
+        <div className="card" style={{ padding: 28 }}>
           {mode === 'login' ? (
             <>
-              <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 5 }}>Sign in</h1>
-              <p className="muted" style={{ fontSize: 13, marginBottom: 26 }}>Enter your credentials to continue</p>
+              <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Sign in</h1>
+              <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Tradeshow Tracker — Fortress Technology</p>
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 <div className="field">
                   <label className="lbl">Email</label>
@@ -77,21 +57,21 @@ export default function Login() {
                 </button>
               </form>
               <button onClick={() => { setMode('reset'); setError('') }}
-                style={{ marginTop: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--purple)', fontSize: 13, fontWeight: 500, padding: 0 }}>
+                style={{ marginTop: 14, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--purple)', fontSize: 13, fontWeight: 500, padding: 0 }}>
                 Forgot password?
               </button>
-              <div style={{ marginTop: 24, padding: '13px 14px', background: 'var(--surface)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6, boxShadow: 'var(--shadow)' }}>
+              <div style={{ marginTop: 20, padding: '11px 13px', background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6 }}>
                 Don't have an account? Contact your system administrator to request access.
               </div>
             </>
           ) : (
             <>
               <button onClick={() => { setMode('login'); setError(''); setResetSent(false) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, marginBottom: 20, padding: 0 }}>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, marginBottom: 16, padding: 0 }}>
                 ← Back to sign in
               </button>
-              <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 5 }}>Reset password</h1>
-              <p className="muted" style={{ fontSize: 13, marginBottom: 26 }}>We'll send a reset link to your email.</p>
+              <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Reset password</h1>
+              <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>We'll send a reset link to your email.</p>
               {resetSent ? (
                 <div className="info-box">Reset link sent to <strong>{email}</strong>. Check your inbox.</div>
               ) : (

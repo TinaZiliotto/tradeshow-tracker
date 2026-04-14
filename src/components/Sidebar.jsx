@@ -5,13 +5,13 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const NAV = [
-  { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/shows',     icon: Calendar,        label: 'Shows' },
-  { to: '/systems',   icon: Package,         label: 'Systems' },
+  { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/shows',    icon: Calendar,        label: 'Shows' },
+  { to: '/systems',  icon: Package,         label: 'Systems' },
 ]
 const ADMIN_NAV = [
-  { to: '/audit',     icon: ClipboardList,   label: 'Audit Log' },
-  { to: '/settings',  icon: Settings,        label: 'Settings' },
+  { to: '/audit',    icon: ClipboardList,   label: 'Audit Log' },
+  { to: '/settings', icon: Settings,        label: 'Settings' },
 ]
 
 export default function Sidebar() {
@@ -27,10 +27,11 @@ export default function Sidebar() {
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="sb-logo">
-        {open
-          ? <img src="/fortress_full_logo.png" alt="Fortress Technology" style={{ maxWidth: 148, height: 38, objectFit: 'contain' }} />
-          : <img src="/fortress_lightning_logo.png" alt="Fortress" className="icon-logo" style={{ width: 30, height: 30, objectFit: 'contain' }} />
-        }
+        <img
+          src="/logo.png"
+          alt="Fortress"
+          style={{ height: open ? 44 : 32, width: 'auto', objectFit: 'contain', transition: 'height 180ms ease' }}
+        />
       </div>
 
       <nav className="sb-nav">
@@ -43,7 +44,6 @@ export default function Sidebar() {
             {open && <span className="sb-label">{label}</span>}
           </NavLink>
         ))}
-
         {isAdmin && ADMIN_NAV.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to}
             className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
