@@ -1,70 +1,70 @@
-import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Calendar, Package, Settings, LogOut, ChevronRight, ChevronLeft, ClipboardList, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
+import { LayoutDashboard, Calendar, Package, Settings, LogOut, ChevronRight, ChevronLeft, ClipboardList } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-const navItems = [
+const NAV = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/shows',     icon: Calendar,        label: 'Shows' },
-  { to: '/equipment', icon: Package,         label: 'Systems' },
+  { to: '/systems',   icon: Package,         label: 'Systems' },
 ]
-const adminItems = [
-  { to: '/admin',     icon: ShieldCheck,     label: 'Admin' },
+const ADMIN_NAV = [
   { to: '/audit',     icon: ClipboardList,   label: 'Audit Log' },
   { to: '/settings',  icon: Settings,        label: 'Settings' },
 ]
 
 export default function Sidebar() {
-  const [expanded, setExpanded] = useState(false)
+  const [open, setOpen] = useState(false)
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
 
-  async function handleLogout() {
+  async function logout() {
     await supabase.auth.signOut()
     navigate('/login')
   }
 
   return (
-    <aside className={`sidebar ${expanded ? 'expanded' : ''}`}>
-      <div className="sidebar-logo-wrap">
-        {expanded
-          ? <img src="/fortress_logo.png" alt="Fortress Technology" className="sidebar-logo-img" />
-          : <span className="sidebar-logo-icon">🏭</span>
+    <aside className={`sidebar ${open ? 'open' : ''}`}>
+      <div className="sb-logo">
+        {open
+          ? <img src="/fortress_full_logo.png" alt="Fortress Technology" style={{ maxWidth: 148, height: 38, objectFit: 'contain' }} />
+          : <img src="/fortress_lightning_logo.png" alt="Fortress" className="icon-logo" style={{ width: 30, height: 30, objectFit: 'contain' }} />
         }
       </div>
 
-      {navItems.map(({ to, icon: Icon, label }) => (
-        <NavLink key={to} to={to} end={to === '/'}
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          title={!expanded ? label : undefined}
-        >
-          <Icon className="nav-icon" size={17} />
-          {expanded && <span>{label}</span>}
-        </NavLink>
-      ))}
+      <nav className="sb-nav">
+        {NAV.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to} end={to === '/'}
+            className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
+            title={!open ? label : undefined}
+          >
+            <Icon size={17} />
+            {open && <span className="sb-label">{label}</span>}
+          </NavLink>
+        ))}
 
-      {isAdmin && adminItems.map(({ to, icon: Icon, label }) => (
-        <NavLink key={to} to={to}
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          title={!expanded ? label : undefined}
-        >
-          <Icon className="nav-icon" size={17} />
-          {expanded && <span>{label}</span>}
-        </NavLink>
-      ))}
+        {isAdmin && ADMIN_NAV.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to}
+            className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
+            title={!open ? label : undefined}
+          >
+            <Icon size={17} />
+            {open && <span className="sb-label">{label}</span>}
+          </NavLink>
+        ))}
+      </nav>
 
-      <div className="sidebar-spacer" />
-
-      <button className="sidebar-toggle" onClick={handleLogout} title="Log out">
-        <LogOut size={16} />
-        {expanded && <span>Log out</span>}
-      </button>
-
-      <button className="sidebar-toggle" onClick={() => setExpanded(e => !e)} title="Toggle sidebar">
-        {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        {expanded && <span>Collapse</span>}
-      </button>
+      <div className="sb-footer">
+        <button className="sb-toggle" onClick={logout} title="Log out">
+          <LogOut size={16} />
+          {open && <span>Log out</span>}
+        </button>
+        <button className="sb-toggle" onClick={() => setOpen(o => !o)} title={open ? 'Collapse' : 'Expand'}>
+          {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          {open && <span>Collapse</span>}
+        </button>
+      </div>
     </aside>
   )
 }

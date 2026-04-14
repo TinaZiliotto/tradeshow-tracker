@@ -4,36 +4,22 @@ import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 import { supabase, logAudit } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import ShowModal from '../components/ShowModal'
-import EquipmentTab from '../components/tabs/EquipmentTab'
-import CratesTab from '../components/tabs/CratesTab'
-import ShippingTab from '../components/tabs/ShippingTab'
-import SuppliesTab from '../components/tabs/SuppliesTab'
-import FilesTab from '../components/tabs/FilesTab'
-import PortalTab from '../components/tabs/PortalTab'
+import EquipmentTab  from '../components/tabs/EquipmentTab'
+import ShippingTab   from '../components/tabs/ShippingTab'
+import SuppliesTab   from '../components/tabs/SuppliesTab'
+import BrochuresTab  from '../components/tabs/BrochuresTab'
+import FilesTab      from '../components/tabs/FilesTab'
+import PortalTab     from '../components/tabs/PortalTab'
 
-const TABS = ['Equipment', 'Crates', 'Shipping', 'Supplies', 'Files', 'Portal']
+// Crates tab is removed per V4 requirements
+const TABS = ['Systems', 'Shipping', 'Supplies', 'Brochures', 'Files', 'Portal']
 
-const STATUS_BADGE = {
-  Confirmed:    'badge-blue',
-  TBA:          'badge-amber',
-  Cancelled:    'badge-red',
-  Completed:    'badge-green',
-  'In Progress':'badge-purple',
-  Finished:     'badge-grey',
-}
+const SB = { Confirmed:'b-blue', TBA:'b-amber', Cancelled:'b-red', Completed:'b-green', 'In Progress':'b-purple', Finished:'b-grey' }
+function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
 
-function statusBadge(status) {
-  return <span className={`badge ${STATUS_BADGE[status] || 'badge-grey'}`}>{status || 'Unknown'}</span>
-}
-
-function InfoPair({ label, value }) {
+function Pair({ label, value }) {
   if (!value) return null
-  return (
-    <div>
-      <div className="label" style={{ marginBottom: '3px' }}>{label}</div>
-      <div style={{ fontSize: '13px', whiteSpace: 'pre-line' }}>{value}</div>
-    </div>
-  )
+  return <div><div className="lbl" style={{ marginBottom:2 }}>{label}</div><div style={{ fontSize:13, whiteSpace:'pre-line' }}>{value}</div></div>
 }
 
 export default function ShowDetail() {
@@ -42,7 +28,7 @@ export default function ShowDetail() {
   const { isAdmin } = useAuth()
   const [show, setShow] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('Equipment')
+  const [tab, setTab] = useState('Systems')
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -50,79 +36,70 @@ export default function ShowDetail() {
 
   async function fetchShow() {
     const { data } = await supabase.from('tradeshows').select('*').eq('id', id).single()
-    setShow(data)
-    setLoading(false)
+    setShow(data); setLoading(false)
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete "${show.show_name}"? This will remove all associated data.`)) return
+    if (!confirm(`Delete "${show.show_name}"? All associated data will be removed.`)) return
     setDeleting(true)
     await supabase.from('tradeshows').delete().eq('id', id)
     await logAudit({ action: 'delete', entityType: 'tradeshow', entityId: id, entityLabel: show.show_name })
     navigate('/shows')
   }
 
-  if (loading) return <div className="loading-screen"><span className="spinner" /></div>
+  if (loading) return <div className="load-screen"><span className="spin" /></div>
   if (!show) return <div className="page-body"><p>Show not found.</p></div>
 
   return (
     <>
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/shows')}>
-            <ArrowLeft size={14} /> Shows
-          </button>
+      <div className="page-head">
+        <div className="row gap-3">
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/shows')}><ArrowLeft size={14} /> Shows</button>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="row gap-2">
               <h1 className="page-title">{show.show_name}</h1>
-              {statusBadge(show.status)}
+              <SBadge s={show.status} />
             </div>
-            <p className="page-subtitle">
+            <p className="page-sub">
               {show.dates_start
-                ? `${new Date(show.dates_start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${show.dates_end ? new Date(show.dates_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '?'}`
+                ? `${new Date(show.dates_start + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric' })} – ${show.dates_end ? new Date(show.dates_end + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '?'}`
                 : 'Dates TBA'}
             </p>
           </div>
         </div>
         {isAdmin && (
-          <div className="flex gap-2">
-            <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}><Edit size={14} /> Edit</button>
-            <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={deleting}><Trash2 size={14} /> Delete</button>
+          <div className="row gap-2">
+            <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}><Edit size={13} /> Edit</button>
+            <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={deleting}><Trash2 size={13} /> Delete</button>
           </div>
         )}
       </div>
 
       <div className="page-body">
-        <div className="card card-body" style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
-            <InfoPair label="Booth Number" value={show.booth_number} />
-            <InfoPair label="Sales Order" value={show.sales_order} />
-            <InfoPair label="Show Contact" value={show.show_contact} />
-            <InfoPair label="Move In" value={show.move_in} />
-            <InfoPair label="Move Out" value={show.move_out} />
-            {show.notes && <InfoPair label="Notes" value={show.notes} />}
+        <div className="card card-bd" style={{ marginBottom: 18 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(170px, 1fr))', gap:18 }}>
+            <Pair label="Booth Number"  value={show.booth_number} />
+            <Pair label="Sales Order"   value={show.sales_order} />
+            <Pair label="Show Contact"  value={show.show_contact} />
+            <Pair label="Move In"       value={show.move_in} />
+            <Pair label="Move Out"      value={show.move_out} />
+            {show.notes && <Pair label="Notes" value={show.notes} />}
           </div>
         </div>
 
         <div className="tabs">
-          {TABS.map(tab => (
-            <button key={tab} className={`tab ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
-              {tab}
-            </button>
-          ))}
+          {TABS.map(t => <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>)}
         </div>
 
-        {activeTab === 'Equipment' && <EquipmentTab showId={id} isAdmin={isAdmin} />}
-        {activeTab === 'Crates'    && <CratesTab    showId={id} isAdmin={isAdmin} />}
-        {activeTab === 'Shipping'  && <ShippingTab  showId={id} isAdmin={isAdmin} />}
-        {activeTab === 'Supplies'  && <SuppliesTab  showId={id} isAdmin={isAdmin} />}
-        {activeTab === 'Files'     && <FilesTab     showId={id} showName={show.show_name} />}
-        {activeTab === 'Portal'    && <PortalTab    showId={id} />}
+        {tab === 'Systems'   && <EquipmentTab  showId={id} isAdmin={isAdmin} />}
+        {tab === 'Shipping'  && <ShippingTab   showId={id} isAdmin={isAdmin} />}
+        {tab === 'Supplies'  && <SuppliesTab   showId={id} isAdmin={isAdmin} />}
+        {tab === 'Brochures' && <BrochuresTab  showId={id} isAdmin={isAdmin} />}
+        {tab === 'Files'     && <FilesTab      showId={id} showName={show.show_name} />}
+        {tab === 'Portal'    && <PortalTab     showId={id} />}
       </div>
 
-      {editing && (
-        <ShowModal show={show} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); fetchShow() }} />
-      )}
+      {editing && <ShowModal show={show} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); fetchShow() }} />}
     </>
   )
 }

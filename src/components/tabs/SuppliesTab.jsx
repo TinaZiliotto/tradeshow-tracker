@@ -1,171 +1,102 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X } from 'lucide-react'
-import { supabase, logAudit } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
-function SupplyForm({ showId, item, categories, onClose, onSaved }) {
-  const isEdit = !!item
-  const [form, setForm] = useState({
-    category: item?.category || '',
-    item: item?.item || '',
-    quantity: item?.quantity || '',
-    notes: item?.notes || '',
-  })
-  const [saving, setSaving] = useState(false)
-  const set = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
-
-  async function handleSave(e) {
-    e.preventDefault()
-    setSaving(true)
-    const payload = { ...form, tradeshow_id: showId }
-    if (isEdit) {
-      await supabase.from('supplies').update(form).eq('id', item.id)
-      await logAudit({ action: 'update', entityType: 'supply', entityId: item.id, entityLabel: form.item, oldValue: item, newValue: form })
-    } else {
-      const { data } = await supabase.from('supplies').insert(payload).select().single()
-      await logAudit({ action: 'create', entityType: 'supply', entityId: data?.id, entityLabel: form.item, newValue: payload })
-    }
-    onSaved()
-  }
-
-  return (
-    <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-header">
-          <h2 className="modal-title">{isEdit ? 'Edit Supply Item' : 'Add Supply Item'}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
-        </div>
-        <form onSubmit={handleSave}>
-          <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div className="form-grid">
-              <div className="input-group">
-                <label className="label">Category</label>
-                <select className="select" value={form.category} onChange={set('category')} required>
-                  <option value="">— Select —</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="input-group">
-                <label className="label">Quantity</label>
-                <input className="input" value={form.quantity} onChange={set('quantity')} placeholder="e.g. 150 units" />
-              </div>
-              <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="label">Item *</label>
-                <input className="input" value={form.item} onChange={set('item')} required placeholder="e.g. Tote bags" />
-              </div>
-              <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="label">Notes</label>
-                <textarea className="textarea" value={form.notes} onChange={set('notes')} rows={2} />
-              </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? <span className="spinner" /> : isEdit ? 'Save' : 'Add Item'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
+const SUPPLY_SECTIONS = [
+  { key: 'merchandise_item', label: 'Merchandise',          editable: true  },
+  { key: 'cleaning_item',    label: 'Cleaning Supplies',    editable: false },
+  { key: 'office_item',      label: 'Office Supplies',      editable: false },
+  { key: 'electrical_item',  label: 'Electrical Supplies',  editable: false },
+  { key: 'misc_item',        label: 'Miscellaneous',        editable: false },
+]
 
 export default function SuppliesTab({ showId, isAdmin }) {
-  const [items, setItems] = useState([])
-  const [categories, setCategories] = useState([])
+  const [data, setData] = useState({})   // { category: [{item, quantity, id?}] }
+  const [masterLists, setMasterLists] = useState({})
   const [loading, setLoading] = useState(true)
-  const [modalItem, setModalItem] = useState(null)
-  const [showAdd, setShowAdd] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    fetchItems()
-    supabase.from('dropdown_options').select('value').eq('category', 'supply_category').order('sort_order')
-      .then(({ data }) => setCategories(data?.map(d => d.value) || []))
-  }, [showId])
+  useEffect(() => { init() }, [showId])
 
-  async function fetchItems() {
-    const { data } = await supabase.from('supplies').select('*').eq('tradeshow_id', showId).order('category').order('item')
-    setItems(data || [])
+  async function init() {
+    // Load master lists from dropdown_options
+    const ml = {}
+    for (const s of SUPPLY_SECTIONS) {
+      const { data: opts } = await supabase.from('dropdown_options').select('value').eq('category', s.key).order('sort_order')
+      ml[s.key] = opts?.map(o => o.value) || []
+    }
+    setMasterLists(ml)
+
+    // Load saved quantities for this show
+    const { data: saved } = await supabase.from('show_supplies').select('*').eq('tradeshow_id', showId)
+    const byKey = {}
+    for (const s of SUPPLY_SECTIONS) {
+      const savedRows = saved?.filter(r => r.category === s.key) || []
+      byKey[s.key] = ml[s.key].map(item => {
+        const found = savedRows.find(r => r.item === item)
+        return { item, quantity: found?.quantity || '', db_id: found?.id || null }
+      })
+    }
+    setData(byKey)
     setLoading(false)
   }
 
-  async function handleDelete(item) {
-    if (!confirm(`Delete "${item.item}"?`)) return
-    await supabase.from('supplies').delete().eq('id', item.id)
-    await logAudit({ action: 'delete', entityType: 'supply', entityId: item.id, entityLabel: item.item })
-    fetchItems()
+  function setQty(category, item, qty) {
+    setData(prev => ({
+      ...prev,
+      [category]: prev[category].map(r => r.item === item ? { ...r, quantity: qty } : r)
+    }))
   }
 
-  const grouped = items.reduce((acc, item) => {
-    const cat = item.category || 'Other'
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(item)
-    return acc
-  }, {})
+  async function handleSave() {
+    setSaving(true)
+    for (const s of SUPPLY_SECTIONS) {
+      const rows = data[s.key] || []
+      for (const row of rows) {
+        if (row.db_id) {
+          await supabase.from('show_supplies').update({ quantity: row.quantity }).eq('id', row.db_id)
+        } else if (row.quantity) {
+          await supabase.from('show_supplies').insert({ tradeshow_id: showId, category: s.key, item: row.item, quantity: row.quantity })
+        }
+      }
+    }
+    setSaving(false)
+    init()
+  }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}><span className="spinner" /></div>
+  if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:32 }}><span className="spin" /></div>
 
   return (
     <div>
-      {isAdmin && (
-        <div style={{ marginBottom: '16px' }}>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}><Plus size={14} /> Add Item</button>
-        </div>
-      )}
-
-      {items.length === 0 ? (
-        <div className="card">
-          <div className="empty"><div className="empty-icon">🛍️</div><p>No supplies added yet</p></div>
-        </div>
-      ) : (
-        Object.entries(grouped).map(([category, rows]) => (
-          <div key={category} className="card" style={{ marginBottom: '16px' }}>
-            <div className="card-header">
-              <h3 className="card-title">{category}</h3>
-            </div>
-            <div className="card-body" style={{ padding: '12px 24px' }}>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Notes</th>
-                      {isAdmin && <th></th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.item}</td>
-                        <td className="text-muted">{item.quantity || '—'}</td>
-                        <td className="text-muted">{item.notes || '—'}</td>
-                        {isAdmin && (
-                          <td>
-                            <div className="flex gap-2">
-                              <button className="btn btn-ghost btn-sm" onClick={() => setModalItem(item)}><Pencil size={13} /></button>
-                              <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(item)}><Trash2 size={13} /></button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {SUPPLY_SECTIONS.map(({ key, label }) => (
+        <div key={key} className="card" style={{ marginBottom: 14 }}>
+          <div className="card-hd"><h3 className="card-title">{label}</h3></div>
+          <div className="card-bd" style={{ padding: '12px 20px' }}>
+            {(data[key] || []).length === 0 ? (
+              <p className="muted" style={{ fontSize: 13 }}>No items configured. Add them in Settings.</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
+                {(data[key] || []).map(row => (
+                  <div key={row.item} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, padding:'7px 10px', background:'var(--surface-2)', borderRadius:'var(--radius-sm)' }}>
+                    <span style={{ fontSize:13 }}>{row.item}</span>
+                    <input
+                      className="input"
+                      style={{ width: 80, textAlign:'center' }}
+                      placeholder="qty"
+                      value={row.quantity}
+                      onChange={e => setQty(key, row.item, e.target.value)}
+                      readOnly={!isAdmin}
+                    />
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
-        ))
-      )}
-
-      {(showAdd || modalItem) && (
-        <SupplyForm
-          showId={showId}
-          item={modalItem}
-          categories={categories}
-          onClose={() => { setShowAdd(false); setModalItem(null) }}
-          onSaved={() => { setShowAdd(false); setModalItem(null); fetchItems() }}
-        />
+        </div>
+      ))}
+      {isAdmin && (
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? <span className="spin spin-white" /> : 'Save Quantities'}
+        </button>
       )}
     </div>
   )

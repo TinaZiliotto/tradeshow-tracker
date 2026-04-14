@@ -1,70 +1,119 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, Ban, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-const CATEGORIES = [
-  { key: 'equipment_name', label: 'Equipment Names' },
-  { key: 'carrier',        label: 'Carriers' },
-  { key: 'contact',        label: 'Show Contacts' },
-  { key: 'show_status',    label: 'Show Statuses' },
-  { key: 'supply_category',label: 'Supply Categories' },
+const DROPDOWN_SECTIONS = [
+  { key: 'equipment_name',   label: 'Equipment Names',           desc: 'Names available when creating systems.' },
+  { key: 'contact',          label: 'Show Contacts',             desc: 'People selectable as show contact.' },
+  { key: 'show_status',      label: 'Show Statuses',             desc: 'Status options for each show.' },
+  { key: 'system_location',  label: 'System Locations',          desc: 'Location options on system records.' },
+  { key: 'merchandise_item', label: 'Merchandise Items',         desc: 'Items in the Merchandise supply section.' },
+  { key: 'cleaning_item',    label: 'Cleaning Supplies',         desc: 'Items in the Cleaning Supplies section.' },
+  { key: 'office_item',      label: 'Office Supplies',           desc: 'Items in the Office Supplies section.' },
+  { key: 'electrical_item',  label: 'Electrical Supplies',       desc: 'Items in the Electrical Supplies section.' },
+  { key: 'misc_item',        label: 'Miscellaneous Supplies',    desc: 'Items in the Miscellaneous section.' },
+  { key: 'brochure_item',    label: 'Brochure Names',            desc: 'Default brochures added to every new show.' },
+  { key: 'checklist_item',   label: 'Checklist Items',           desc: 'Default checklist tasks for each show.' },
 ]
 
-function DropdownSection({ category, label }) {
+function DropSection({ category, label, desc }) {
   const [items, setItems] = useState([])
-  const [newValue, setNewValue] = useState('')
+  const [newVal, setNewVal] = useState('')
   const [adding, setAdding] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => { fetch() }, [category])
 
   async function fetch() {
     const { data } = await supabase.from('dropdown_options').select('*').eq('category', category).order('sort_order').order('value')
-    setItems(data || [])
+    setItems(data || []); setLoaded(true)
   }
 
-  async function handleAdd(e) {
-    e.preventDefault()
-    if (!newValue.trim()) return
+  async function add(e) {
+    e.preventDefault(); if (!newVal.trim()) return
     setAdding(true)
-    await supabase.from('dropdown_options').insert({ category, value: newValue.trim(), sort_order: items.length + 1 })
-    setNewValue('')
-    setAdding(false)
-    fetch()
+    await supabase.from('dropdown_options').insert({ category, value: newVal.trim(), sort_order: items.length + 1 })
+    setNewVal(''); setAdding(false); fetch()
   }
 
-  async function handleDelete(id, value) {
-    if (!confirm(`Remove "${value}" from ${label}?`)) return
-    await supabase.from('dropdown_options').delete().eq('id', id)
-    fetch()
+  async function remove(id, val) {
+    if (!confirm(`Remove "${val}"?`)) return
+    await supabase.from('dropdown_options').delete().eq('id', id); fetch()
+  }
+
+  if (!loaded) return null
+
+  return (
+    <div className="card" style={{ marginBottom: 12 }}>
+      <div className="card-hd"><div><div className="card-title">{label}</div><div className="muted" style={{ fontSize:12, marginTop:2 }}>{desc}</div></div></div>
+      <div className="card-bd">
+        <div style={{ display:'flex', flexWrap:'wrap', gap:7, marginBottom: items.length ? 12 : 0 }}>
+          {items.map(item => (
+            <span key={item.id} style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:20, padding:'3px 10px 3px 12px', fontSize:13 }}>
+              {item.value}
+              <button onClick={() => remove(item.id, item.value)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', display:'flex', padding:1 }}
+                onMouseOver={e=>e.currentTarget.style.color='var(--red)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-3)'}>
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+          {!items.length && <span className="muted" style={{ fontSize:13 }}>No items yet.</span>}
+        </div>
+        <form onSubmit={add} style={{ display:'flex', gap:8, maxWidth:360 }}>
+          <input className="input" value={newVal} onChange={e=>setNewVal(e.target.value)} placeholder={`Add ${label.toLowerCase().replace(/s$/,'').replace(' items','')}…`} />
+          <button type="submit" className="btn btn-primary btn-sm" disabled={adding || !newVal.trim()} style={{ flexShrink:0 }}>
+            {adding ? <span className="spin spin-white" style={{ width:14, height:14 }} /> : <Plus size={14} />}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function InviteModal({ onClose, onSaved }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState('viewer')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSave(e) {
+    e.preventDefault(); setSaving(true); setError('')
+    // Create user via Supabase Admin API (service role needed — this calls the REST API)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ email, password, email_confirm: true })
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.message || 'Failed to create user'); setSaving(false); return }
+    // Set role
+    await supabase.from('profiles').update({ role }).eq('id', data.id)
+    onSaved()
   }
 
   return (
-    <div className="card" style={{ marginBottom: '16px' }}>
-      <div className="card-header"><h3 className="card-title">{label}</h3></div>
-      <div className="card-body">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          {items.map(item => (
-            <div key={item.id} style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'var(--surface-2)', border: '1px solid var(--border)',
-              borderRadius: '20px', padding: '4px 10px 4px 12px', fontSize: '13px'
-            }}>
-              {item.value}
-              <button onClick={() => handleDelete(item.id, item.value)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)',
-                display: 'flex', alignItems: 'center', padding: '1px'
-              }}>
-                <X size={12} />
-              </button>
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hd"><h2 className="modal-title">Create New User</h2><button className="btn btn-ghost btn-sm" onClick={onClose}><X size={15} /></button></div>
+        <form onSubmit={handleSave}>
+          <div className="modal-bd" style={{ display:'flex', flexDirection:'column', gap:13 }}>
+            <div className="field"><label className="lbl">Email *</label><input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoFocus /></div>
+            <div className="field"><label className="lbl">Password *</label><input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="min. 6 characters" /></div>
+            <div className="field"><label className="lbl">Role</label>
+              <select className="sel" value={role} onChange={e=>setRole(e.target.value)}>
+                <option value="viewer">Viewer</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
-          ))}
-          {items.length === 0 && <p className="text-muted text-sm">No items yet.</p>}
-        </div>
-        <form onSubmit={handleAdd} style={{ display: 'flex', gap: '8px', maxWidth: '360px' }}>
-          <input className="input" value={newValue} onChange={e => setNewValue(e.target.value)} placeholder={`Add new ${label.toLowerCase().replace(/s$/, '')}...`} />
-          <button type="submit" className="btn btn-primary btn-sm" disabled={adding || !newValue.trim()}>
-            {adding ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <Plus size={14} />}
-          </button>
+            {error && <p style={{ color:'var(--red)', fontSize:13 }}>{error}</p>}
+            <div className="info-box">The user will be able to log in immediately with these credentials. Share them securely.</div>
+          </div>
+          <div className="modal-ft">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? <span className="spin spin-white" /> : 'Create User'}</button>
+          </div>
         </form>
       </div>
     </div>
@@ -74,63 +123,71 @@ function DropdownSection({ category, label }) {
 function UsersSection() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showInvite, setShowInvite] = useState(false)
 
-  useEffect(() => {
-    supabase.from('profiles').select('id, full_name, role, created_at').order('created_at')
-      .then(({ data }) => { setUsers(data || []); setLoading(false) })
-  }, [])
+  useEffect(() => { fetchUsers() }, [])
+
+  async function fetchUsers() {
+    const { data } = await supabase.from('profiles').select('id, full_name, role, suspended, created_at').order('created_at')
+    setUsers(data || []); setLoading(false)
+  }
 
   async function toggleRole(user) {
     const newRole = user.role === 'admin' ? 'viewer' : 'admin'
     if (!confirm(`Change ${user.full_name || user.id}'s role to "${newRole}"?`)) return
     await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, role: newRole } : u))
+    fetchUsers()
+  }
+
+  async function toggleSuspend(user) {
+    const suspend = !user.suspended
+    if (!confirm(`${suspend ? 'Suspend' : 'Reactivate'} this user?`)) return
+    await supabase.from('profiles').update({ suspended: suspend }).eq('id', user.id)
+    fetchUsers()
+  }
+
+  async function deleteUser(user) {
+    if (!confirm(`Permanently delete user "${user.full_name || user.id}"? This cannot be undone.`)) return
+    await supabase.from('profiles').delete().eq('id', user.id)
+    fetchUsers()
   }
 
   return (
     <div className="card">
-      <div className="card-header"><h3 className="card-title">User Roles</h3></div>
-      <div className="card-body" style={{ padding: '12px 24px' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}><span className="spinner" /></div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>User ID</th>
-                  <th>Role</th>
-                  <th>Joined</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(user => (
-                  <tr key={user.id}>
-                    <td>{user.full_name || '(no name)'}</td>
-                    <td className="text-muted" style={{ fontSize: '11px', fontFamily: 'monospace' }}>{user.id.substring(0, 16)}...</td>
-                    <td>
-                      <span className={`badge ${user.role === 'admin' ? 'badge-blue' : 'badge-grey'}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="text-muted">{new Date(user.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <button className="btn btn-secondary btn-sm" onClick={() => toggleRole(user)}>
-                        Make {user.role === 'admin' ? 'Viewer' : 'Admin'}
+      <div className="card-hd">
+        <div><div className="card-title">Users & Roles</div><div className="muted" style={{ fontSize:12, marginTop:2 }}>Manage user access levels and accounts</div></div>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowInvite(true)}><UserPlus size={13} /> Create User</button>
+      </div>
+      <div className="card-bd" style={{ padding:'12px 20px' }}>
+        {loading ? <span className="spin" /> : (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Name / Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} style={{ opacity: u.suspended ? 0.5 : 1 }}>
+                  <td>{u.full_name || <span className="muted">(no name)</span>}</td>
+                  <td><span className={`badge ${u.role === 'admin' ? 'b-purple' : 'b-grey'}`}>{u.role}</span></td>
+                  <td><span className={`badge ${u.suspended ? 'b-red' : 'b-green'}`}>{u.suspended ? 'Suspended' : 'Active'}</span></td>
+                  <td className="muted">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <div className="row gap-2">
+                      <button className="btn btn-secondary btn-xs" onClick={() => toggleRole(u)}>Make {u.role === 'admin' ? 'Viewer' : 'Admin'}</button>
+                      <button className="btn btn-ghost btn-xs" onClick={() => toggleSuspend(u)} title={u.suspended ? 'Reactivate' : 'Suspend'}>
+                        {u.suspended ? <RotateCcw size={12} /> : <Ban size={12} />}
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <button className="btn btn-ghost btn-xs danger" onClick={() => deleteUser(u)} title="Delete user"><Trash2 size={12} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
         )}
-        <p className="text-muted text-sm" style={{ marginTop: '12px' }}>
-          New users are created directly in the Supabase Authentication dashboard. Their role defaults to Viewer.
+        <p className="muted" style={{ fontSize:12, marginTop:12, lineHeight:1.6 }}>
+          Suspended users retain their data but cannot log in. Deleted users are permanently removed.
         </p>
       </div>
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onSaved={() => { setShowInvite(false); fetchUsers() }} />}
     </div>
   )
 }
@@ -140,23 +197,15 @@ export default function Settings() {
 
   return (
     <>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Settings</h1>
-          <p className="page-subtitle">Manage dropdown options and user access</p>
-        </div>
+      <div className="page-head">
+        <div><h1 className="page-title">Settings</h1><p className="page-sub">Manage dropdown options and user access</p></div>
       </div>
-
       <div className="page-body">
         <div className="tabs">
           <button className={`tab ${tab === 'dropdowns' ? 'active' : ''}`} onClick={() => setTab('dropdowns')}>Dropdown Options</button>
           <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Users & Roles</button>
         </div>
-
-        {tab === 'dropdowns' && CATEGORIES.map(c => (
-          <DropdownSection key={c.key} category={c.key} label={c.label} />
-        ))}
-
+        {tab === 'dropdowns' && DROPDOWN_SECTIONS.map(s => <DropSection key={s.key} category={s.key} label={s.label} desc={s.desc} />)}
         {tab === 'users' && <UsersSection />}
       </div>
     </>
