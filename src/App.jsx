@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Shows from './pages/Shows'
 import ShowDetail from './pages/ShowDetail'
 import Systems from './pages/Systems'
+import SystemDetail from './pages/SystemDetail'
 import AuditLog from './pages/AuditLog'
 import Settings from './pages/Settings'
 
@@ -29,6 +30,7 @@ function Layout() {
           <Route path="/shows"      element={<Shows />} />
           <Route path="/shows/:id"  element={<ShowDetail />} />
           <Route path="/systems"    element={<Systems />} />
+          <Route path="/systems/:id" element={<SystemDetail />} />
           <Route path="/audit"      element={<AdminOnly><AuditLog /></AdminOnly>} />
           <Route path="/settings"   element={<AdminOnly><Settings /></AdminOnly>} />
         </Routes>

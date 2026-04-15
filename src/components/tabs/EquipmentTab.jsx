@@ -146,7 +146,7 @@ export default function EquipmentTab({ showId, isAdmin, isEditor }) {
                       <button
                         className="btn btn-ghost btn-sm"
                         title="Open system page"
-                        onClick={() => navigate(`/systems?highlight=${s.id}`)}
+                        onClick={() => navigate(`/systems/${s.id}`)}
                       >
                         <ExternalLink size={13} />
                       </button>

@@ -365,7 +365,13 @@ export default function Systems() {
                         <td style={{ color: 'var(--text-3)' }}>
                           {expandedId === s.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </td>
-                        <td><strong>{s.equipment_name}</strong>{s.notes && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.notes}</div>}</td>
+                        <td>
+                          <button className="btn btn-ghost" style={{ padding: '0 0', fontWeight: 600, fontSize: 13, color: 'var(--purple)', textDecoration: 'underline', textDecorationColor: 'var(--purple-dim)', background:'none', border:'none', cursor:'pointer' }}
+                            onClick={e => { e.stopPropagation(); navigate(`/systems/${s.id}`) }}>
+                            {s.equipment_name}
+                          </button>
+                          {s.notes && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.notes}</div>}
+                        </td>
                         <td className="mono">{s.serial_number}</td>
                         <td className="mono muted">{s.part_number || '—'}</td>
                         <td className="muted">{s.crate_number || '—'}</td>
