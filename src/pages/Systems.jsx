@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Search, Package, Upload, Eye, Download, FileText, Image, File, ChevronDown, ChevronUp, Paperclip, ArrowUp, ArrowDown } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { useRefreshTick } from '../context/RefreshContext'
 import { supabase, logAudit } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -145,8 +146,10 @@ function SystemForm({ item, equipmentNames, onClose, onSaved }) {
     part_number:    item?.part_number    || '',
     crate_number:   item?.crate_number   || '',
     location:       item?.location       || 'Regal',
-    dimensions:     item?.dimensions     || '',
-    notes:          item?.notes          || '',
+    dimensions:       item?.dimensions       || '',
+    equipment_weight: item?.equipment_weight || '',
+    crate_weight:     item?.crate_weight     || '',
+    notes:            item?.notes            || '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -197,6 +200,8 @@ function SystemForm({ item, equipmentNames, onClose, onSaved }) {
                 </select>
               </div>
               <div className="field"><label className="lbl">Dimensions</label><input className="input" value={form.dimensions} onChange={set('dimensions')} placeholder='e.g. 96"L x 66"W' /></div>
+              <div className="field"><label className="lbl">Equipment Weight</label><input className="input" value={form.equipment_weight} onChange={set('equipment_weight')} placeholder="e.g. 450 lbs" /></div>
+              <div className="field"><label className="lbl">Crate Weight</label><input className="input" value={form.crate_weight} onChange={set('crate_weight')} placeholder="e.g. 1500 lbs" /></div>
               <div className="field fspan"><label className="lbl">Notes</label><textarea className="ta" value={form.notes} onChange={set('notes')} rows={2} /></div>
             </div>
             {error && <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
@@ -234,7 +239,15 @@ export default function Systems() {
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-  const { isAdmin } = useAuth()
+  const { isAdmin, isEditor } = useAuth()
+  const location = useLocation()
+
+  // Auto-expand a system when navigated from a show entry
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const highlight = params.get('highlight')
+    if (highlight) setExpandedId(highlight)
+  }, [location.search])
 
   const LOCATIONS = ['Regal', 'Head Office (HO)', 'At the Show']
 
@@ -299,7 +312,7 @@ export default function Systems() {
           <h1 className="page-title">Systems</h1>
           <p className="page-sub">{systems.length} system{systems.length !== 1 ? 's' : ''} in the registry</p>
         </div>
-        {isAdmin && (
+        {isEditor && (
           <button className="btn btn-primary" onClick={() => { setEditItem(null); setShowForm(true) }}>
             <Plus size={14} /> Add System
           </button>
@@ -338,9 +351,11 @@ export default function Systems() {
                     <th>Part Number</th>
                     <th>Crate</th>
                     <th>Dimensions</th>
+                    <th>Eq. Weight</th>
+                    <th>Crate Weight</th>
                     <th>Location</th>
                     <th title="Has file attachments">Attachments</th>
-                    {isAdmin && <th></th>}
+                    {isEditor && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -355,6 +370,8 @@ export default function Systems() {
                         <td className="mono muted">{s.part_number || '—'}</td>
                         <td className="muted">{s.crate_number || '—'}</td>
                         <td className="muted">{s.dimensions || '—'}</td>
+                        <td className="muted">{s.equipment_weight || '—'}</td>
+                        <td className="muted">{s.crate_weight || '—'}</td>
                         <td>{locBadge(s.location)}</td>
                         <td>
                           {fileCounts[s.id] > 0 && (
@@ -375,7 +392,7 @@ export default function Systems() {
                       </tr>
                       {expandedId === s.id && (
                         <tr key={`${s.id}-files`}>
-                          <td colSpan={isAdmin ? 9 : 8} style={{ padding: 0, border: 'none' }}>
+                          <td colSpan={isEditor ? 11 : 10} style={{ padding: 0, border: 'none' }}>
                             <SystemFiles
                               systemId={s.id}
                               systemName={`${s.equipment_name} (${s.serial_number})`}

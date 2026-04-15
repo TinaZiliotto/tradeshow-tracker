@@ -26,21 +26,13 @@ export default function Sidebar() {
 
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
-      {/* Logo area - same image, different size */}
       <div className="sb-logo">
         <img
           src="/logo_full.png"
           alt="Fortress Technology"
-          style={{
-            height: open ? 40 : 28,
-            width: 'auto',
-            maxWidth: open ? 160 : 36,
-            objectFit: 'contain',
-            transition: 'all 180ms ease',
-          }}
+          style={{ height: open ? 40 : 28, width: 'auto', maxWidth: open ? 160 : 36, objectFit: 'contain', transition: 'all 180ms ease' }}
         />
       </div>
-
       <nav className="sb-nav">
         {NAV.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} end={to === '/'}
@@ -51,6 +43,7 @@ export default function Sidebar() {
             {open && <span className="sb-label">{label}</span>}
           </NavLink>
         ))}
+        {/* Audit log and Settings only visible to admins */}
         {isAdmin && ADMIN_NAV.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to}
             className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
@@ -61,12 +54,8 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
       <div className="sb-footer">
-        <button className="sb-toggle" onClick={logout} title="Log out">
-          <LogOut size={16} />
-          {open && <span>Log out</span>}
-        </button>
+        <button className="sb-toggle" onClick={logout} title="Log out"><LogOut size={16} />{open && <span>Log out</span>}</button>
         <button className="sb-toggle" onClick={() => setOpen(o => !o)} title={open ? 'Collapse' : 'Expand'}>
           {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           {open && <span>Collapse</span>}

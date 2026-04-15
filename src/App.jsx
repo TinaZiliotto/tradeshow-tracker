@@ -10,6 +10,7 @@ import Systems from './pages/Systems'
 import AuditLog from './pages/AuditLog'
 import Settings from './pages/Settings'
 
+// Settings requires admin; everything else requires at least editor
 function AdminOnly({ children }) {
   const { isAdmin } = useAuth()
   return isAdmin ? children : <Navigate to="/" replace />

@@ -74,7 +74,7 @@ function ShipSection({ title, rows, isAdmin, onEdit, onDelete }) {
   )
 }
 
-export default function ShippingTab({ showId, isAdmin }) {
+export default function ShippingTab({ showId, isAdmin, isEditor }) {
   const tick = useRefreshTick()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)

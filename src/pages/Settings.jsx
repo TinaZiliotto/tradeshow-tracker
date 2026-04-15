@@ -83,9 +83,16 @@ function InviteModal({ onClose, onSaved }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName.trim() } }
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: null,   // suppress confirmation email
+      }
     })
     if (error) { setError(error.message); setSaving(false); return }
+    // If Supabase returns identities=[] the email already exists
+    if (data?.user?.identities?.length === 0) {
+      setError('An account with this email already exists.'); setSaving(false); return
+    }
     if (!data?.user) { setError('User creation failed — check Supabase auth settings.'); setSaving(false); return }
     // Allow trigger to fire then update role + name
     await new Promise(r => setTimeout(r, 1000))
@@ -107,8 +114,9 @@ function InviteModal({ onClose, onSaved }) {
             <div className="field"><label className="lbl">Password *</label><input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="min. 6 characters" /></div>
             <div className="field"><label className="lbl">Role</label>
               <select className="sel" value={role} onChange={e=>setRole(e.target.value)}>
-                <option value="viewer">Viewer</option>
-                <option value="admin">Admin</option>
+                <option value="viewer">Viewer — read only, can upload files</option>
+                <option value="editor">Editor — can edit shows &amp; systems, no Settings access</option>
+                <option value="admin">Admin — full access including Settings</option>
               </select>
             </div>
             {error && <p style={{ color:'var(--red)', fontSize:13 }}>{error}</p>}
@@ -137,7 +145,8 @@ function UsersSection() {
   }
 
   async function toggleRole(user) {
-    const newRole = user.role === 'admin' ? 'viewer' : 'admin'
+    const cycle = { viewer: 'editor', editor: 'admin', admin: 'viewer' }
+    const newRole = cycle[user.role] || 'viewer'
     if (!confirm(`Change ${user.full_name || user.id}'s role to "${newRole}"?`)) return
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
     if (error) { alert(`Failed to update role: ${error.message}`); return }
@@ -173,12 +182,12 @@ function UsersSection() {
               {users.map(u => (
                 <tr key={u.id} style={{ opacity: u.suspended ? 0.5 : 1 }}>
                   <td>{u.full_name || <span className="muted">(no name)</span>}</td>
-                  <td><span className={`badge ${u.role === 'admin' ? 'b-purple' : 'b-grey'}`}>{u.role}</span></td>
+                  <td><span className={`badge ${u.role === 'admin' ? 'b-purple' : u.role === 'editor' ? 'b-blue' : 'b-grey'}`}>{u.role}</span></td>
                   <td><span className={`badge ${u.suspended ? 'b-red' : 'b-green'}`}>{u.suspended ? 'Suspended' : 'Active'}</span></td>
                   <td className="muted">{new Date(u.created_at).toLocaleDateString()}</td>
                   <td>
                     <div className="row gap-2">
-                      <button className="btn btn-secondary btn-xs" onClick={() => toggleRole(u)}>Make {u.role === 'admin' ? 'Viewer' : 'Admin'}</button>
+                      <button className="btn btn-secondary btn-xs" onClick={() => toggleRole(u)}>Make {u.role === 'admin' ? 'Viewer' : u.role === 'editor' ? 'Admin' : 'Editor'}</button>
                       <button className="btn btn-ghost btn-xs" onClick={() => toggleSuspend(u)} title={u.suspended ? 'Reactivate' : 'Suspend'}>
                         {u.suspended ? <RotateCcw size={12} /> : <Ban size={12} />}
                       </button>

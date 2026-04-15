@@ -4,7 +4,7 @@ import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase, logAudit } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
-export default function ChecklistTab({ showId }) {
+export default function ChecklistTab({ showId, isAdmin, isEditor }) {
   const tick = useRefreshTick()
   const [items, setItems] = useState([])
   const [submitted, setSubmitted] = useState(false)
@@ -14,7 +14,7 @@ export default function ChecklistTab({ showId }) {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [newLabel, setNewLabel] = useState('')
-  const { isAdmin, user } = useAuth()
+  const { user } = useAuth()
   // Track whether a DB row exists yet
   const hasRow = useRef(false)
 

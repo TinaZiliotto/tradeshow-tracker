@@ -122,14 +122,14 @@ function PortalCard({ entry, isAdmin, onEdit, onDelete }) {
   )
 }
 
-export default function PortalTab({ showId }) {
+export default function PortalTab({ showId, isAdmin, isEditor }) {
   const tick = useRefreshTick()
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [filter, setFilter] = useState('all')
-  const { isAdmin } = useAuth()
+  // isAdmin comes from prop
 
   useEffect(() => { fetch() }, [showId])
 

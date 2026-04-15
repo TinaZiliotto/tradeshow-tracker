@@ -28,10 +28,12 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
-  const isAdmin = profile?.role === 'admin'
+  const role    = profile?.role ?? 'viewer'
+  const isAdmin  = role === 'admin'
+  const isEditor = role === 'editor' || role === 'admin'  // editors can do everything except Settings
 
   return (
-    <AuthContext.Provider value={{ user, profile, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, profile, role, isAdmin, isEditor, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -12,7 +12,10 @@ export default function ShowModal({ show, onClose, onSaved }) {
     show_name:    show?.show_name    || '',
     year:         show?.year         || new Date().getFullYear(),
     status:       show?.status       || '',
-    booth_number: show?.booth_number || '',
+    booth_number:     show?.booth_number     || '',
+    booth_size:       show?.booth_size       || '',
+    location_city:    show?.location_city    || '',
+    fti_booth_type:   show?.fti_booth_type   || '',
     sales_order:  show?.sales_order  || '',
     show_contact: show?.show_contact || '',
     dates_start:  show?.dates_start  || '',
@@ -77,6 +80,9 @@ export default function ShowModal({ show, onClose, onSaved }) {
               <div className="field"><label className="lbl">Start Date</label><input className="input" type="date" value={form.dates_start} onChange={set('dates_start')} /></div>
               <div className="field"><label className="lbl">End Date</label><input className="input" type="date" value={form.dates_end} onChange={set('dates_end')} /></div>
               <div className="field"><label className="lbl">Booth Number</label><input className="input" value={form.booth_number} onChange={set('booth_number')} /></div>
+              <div className="field"><label className="lbl">Booth Size</label><input className="input" value={form.booth_size} onChange={set('booth_size')} placeholder="e.g. 20x20" /></div>
+              <div className="field"><label className="lbl">Location (City &amp; State)</label><input className="input" value={form.location_city} onChange={set('location_city')} placeholder="e.g. Las Vegas, NV" /></div>
+              <div className="field"><label className="lbl">FTI Booth Type</label><input className="input" value={form.fti_booth_type} onChange={set('fti_booth_type')} placeholder="e.g. 10ft pop up" /></div>
               <div className="field"><label className="lbl">Sales Order</label><input className="input" value={form.sales_order} onChange={set('sales_order')} /></div>
               <div className="field">
                 <label className="lbl">Contact</label>

@@ -10,7 +10,7 @@ const SUPPLY_SECTIONS = [
   { key: 'misc_item',        label: 'Miscellaneous',        editable: false },
 ]
 
-export default function SuppliesTab({ showId, isAdmin }) {
+export default function SuppliesTab({ showId, isAdmin, isEditor }) {
   const tick = useRefreshTick()
   const [data, setData] = useState({})   // { category: [{item, quantity, id?}] }
   const [masterLists, setMasterLists] = useState({})

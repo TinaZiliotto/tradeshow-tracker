@@ -12,8 +12,9 @@ import BrochuresTab  from '../components/tabs/BrochuresTab'
 import FilesTab      from '../components/tabs/FilesTab'
 import PortalTab     from '../components/tabs/PortalTab'
 import ChecklistTab  from '../components/tabs/ChecklistTab'
+import NotesTab      from '../components/tabs/NotesTab'
 
-const TABS = ['Systems', 'Shipping', 'Supplies', 'Brochures', 'Files', 'Portal', 'Checklist']
+const TABS = ['Systems', 'Shipping', 'Supplies', 'Brochures', 'Files', 'Portal', 'Checklist', 'Notes']
 const SB = { Confirmed:'b-blue', TBA:'b-amber', Cancelled:'b-red', Completed:'b-green', 'In Progress':'b-purple', Finished:'b-grey' }
 
 function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
@@ -26,7 +27,7 @@ export default function ShowDetail() {
   const tick = useRefreshTick()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isEditor } = useAuth()
   const [show, setShow] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('Systems')
@@ -68,10 +69,10 @@ export default function ShowDetail() {
             </p>
           </div>
         </div>
-        {isAdmin && (
+        {isEditor && (
           <div className="row gap-2">
             <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}><Edit size={13} /> Edit</button>
-            <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={deleting}><Trash2 size={13} /> Delete</button>
+            {isAdmin && <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={deleting}><Trash2 size={13} /> Delete</button>}
           </div>
         )}
       </div>
@@ -84,6 +85,9 @@ export default function ShowDetail() {
             <Pair label="Show Contact"  value={show.show_contact} />
             <Pair label="Move In"       value={show.move_in} />
             <Pair label="Move Out"      value={show.move_out} />
+            <Pair label="Booth Size"     value={show.booth_size} />
+            <Pair label="Location"       value={show.location_city} />
+            <Pair label="FTI Booth Type" value={show.fti_booth_type} />
             {show.notes && <Pair label="Notes" value={show.notes} />}
           </div>
         </div>
@@ -92,13 +96,14 @@ export default function ShowDetail() {
           {TABS.map(t => <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>)}
         </div>
 
-        {tab === 'Systems'   && <EquipmentTab  showId={id} isAdmin={isAdmin} />}
-        {tab === 'Shipping'  && <ShippingTab   showId={id} isAdmin={isAdmin} />}
-        {tab === 'Supplies'  && <SuppliesTab   showId={id} isAdmin={isAdmin} />}
-        {tab === 'Brochures' && <BrochuresTab  showId={id} isAdmin={isAdmin} />}
+        {tab === 'Systems'   && <EquipmentTab  showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
+        {tab === 'Shipping'  && <ShippingTab   showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
+        {tab === 'Supplies'  && <SuppliesTab   showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
+        {tab === 'Brochures' && <BrochuresTab  showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
         {tab === 'Files'     && <FilesTab      showId={id} showName={show.show_name} />}
         {tab === 'Portal'    && <PortalTab     showId={id} />}
         {tab === 'Checklist' && <ChecklistTab  showId={id} />}
+        {tab === 'Notes'     && <NotesTab      showId={id} isEditor={isEditor} />}
       </div>
 
       {editing && <ShowModal show={show} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); fetchShow() }} />}

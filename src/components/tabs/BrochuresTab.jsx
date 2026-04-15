@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase } from '../../lib/supabase'
 
-export default function BrochuresTab({ showId, isAdmin }) {
+export default function BrochuresTab({ showId, isAdmin, isEditor }) {
   const tick = useRefreshTick()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)

@@ -23,7 +23,7 @@ export default function Shows() {
   const [sortCol, setSortCol] = useState('dates_start')
   const [sortDir, setSortDir] = useState('asc')
   const [showModal, setShowModal] = useState(false)
-  const { isAdmin } = useAuth()
+  const { isAdmin, isEditor } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => { fetchShows() }, [tick])
@@ -63,7 +63,7 @@ export default function Shows() {
           <h1 className="page-title">Shows</h1>
           <p className="page-sub">{shows.length} tradeshow{shows.length !== 1 ? 's' : ''} total</p>
         </div>
-        {isAdmin && <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> Add Show</button>}
+        {isEditor && <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> Add Show</button>}
       </div>
 
       <div className="page-body">
