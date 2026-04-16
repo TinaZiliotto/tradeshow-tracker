@@ -361,15 +361,14 @@ export default function Systems() {
                 <tbody>
                   {filtered.map(s => (
                     <>
-                      <tr key={s.id} style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
-                        <td style={{ color: 'var(--text-3)' }}>
+                      <tr key={s.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/systems/${s.id}`)}>
+                        <td onClick={e => e.stopPropagation()} style={{ color: 'var(--text-3)', cursor: 'pointer' }}
+                          title="Expand attachments"
+                          onClick={e => { e.stopPropagation(); setExpandedId(expandedId === s.id ? null : s.id) }}>
                           {expandedId === s.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </td>
                         <td>
-                          <button className="btn btn-ghost" style={{ padding: '0 0', fontWeight: 600, fontSize: 13, color: 'var(--purple)', textDecoration: 'underline', textDecorationColor: 'var(--purple-dim)', background:'none', border:'none', cursor:'pointer' }}
-                            onClick={e => { e.stopPropagation(); navigate(`/systems/${s.id}`) }}>
-                            {s.equipment_name}
-                          </button>
+                          <strong style={{ color: 'var(--text-1)' }}>{s.equipment_name}</strong>
                           {s.notes && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{s.notes}</div>}
                         </td>
                         <td className="mono">{s.serial_number}</td>

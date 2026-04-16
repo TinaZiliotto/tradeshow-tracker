@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { LayoutDashboard, Calendar, Package, Settings, LogOut, ChevronRight, ChevronLeft, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Calendar, Package, Settings, LogOut, ChevronRight, ChevronLeft, ClipboardList, Wrench } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/shows',    icon: Calendar,        label: 'Shows' },
   { to: '/systems',  icon: Package,         label: 'Systems' },
+  { to: '/service',  icon: Wrench,          label: 'Service' },
 ]
 const ADMIN_NAV = [
   { to: '/audit',    icon: ClipboardList,   label: 'Audit Log' },
@@ -43,7 +44,6 @@ export default function Sidebar() {
             {open && <span className="sb-label">{label}</span>}
           </NavLink>
         ))}
-        {/* Audit log and Settings only visible to admins */}
         {isAdmin && ADMIN_NAV.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to}
             className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
