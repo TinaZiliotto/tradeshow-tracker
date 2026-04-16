@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Package, Truck, ArrowRight, Wrench, AlertTriangle } from 'lucide-react'
+import { Calendar, Package, Truck, ArrowRight, Wrench, AlertTriangle, CheckCircle2, Clock, HelpCircle, Trophy } from 'lucide-react'
 import { useRefreshTick } from '../context/RefreshContext'
 import { supabase } from '../lib/supabase'
+
+const STATUS_META = {
+  'In Progress': { color: '#7c6bd4', bg: 'rgba(124,107,212,0.1)', border: 'rgba(124,107,212,0.25)', icon: Clock,         desc: 'Someone is still adding details or working on it.' },
+  'Completed':   { color: 'var(--green)', bg: 'rgba(26,122,80,0.08)', border: 'rgba(26,122,80,0.2)', icon: CheckCircle2, desc: 'All information has been added.' },
+  'Finished':    { color: 'var(--text-2)', bg: 'var(--surface-2)', border: 'var(--border)', icon: Trophy,               desc: 'Show completed and leads sent to sales reps.' },
+  'TBA':         { color: 'var(--amber)', bg: 'rgba(176,106,0,0.08)', border: 'rgba(176,106,0,0.2)', icon: HelpCircle,   desc: 'To Be Advised — no clear status yet.' },
+}
 
 const SB = { Confirmed:'b-blue', TBA:'b-amber', Cancelled:'b-red', Completed:'b-green', 'In Progress':'b-purple', Finished:'b-grey' }
 function SBadge({ s }) { return <span className={`badge ${SB[s] || 'b-grey'}`}>{s || '—'}</span> }
@@ -15,11 +22,11 @@ const SEV = {
 
 export default function Dashboard() {
   const tick = useRefreshTick()
-  const [shows, setShows]           = useState([])
-  const [systems, setSystems]       = useState([])
+  const [shows, setShows]             = useState([])
+  const [systems, setSystems]         = useState([])
   const [openEntries, setOpenEntries] = useState([])
-  const [systemMap, setSystemMap]   = useState({})
-  const [loading, setLoading]       = useState(true)
+  const [systemMap, setSystemMap]     = useState({})
+  const [loading, setLoading]         = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -38,19 +45,30 @@ export default function Dashboard() {
     })
   }, [tick])
 
-  const now      = new Date()
-  const upcoming = shows.filter(s => s.dates_start && new Date(s.dates_start + 'T00:00:00') >= now)
-  const tba      = shows.filter(s => !s.dates_start)
-  const atShow   = systems.filter(s => s.location === 'At the Show').length
-  const critical = openEntries.filter(e => e.severity === 'critical')
-  const serviceColor = critical.length > 0 ? 'var(--red)' : openEntries.length > 0 ? 'var(--amber)' : 'var(--green)'
+  const now = new Date()
+
+  // "Finished" = show is done and leads sent — exclude from upcoming
+  const finished  = shows.filter(s => s.status === 'Finished')
+  // "Upcoming" = everything that is NOT Finished (includes Completed, In Progress, TBA, Confirmed)
+  const upcoming  = shows.filter(s => s.status !== 'Finished')
+  // For the table, show sorted by date, upcoming first
+  const upcomingTable = shows
+    .filter(s => s.status !== 'Finished')
+    .sort((a, b) => {
+      if (!a.dates_start) return 1
+      if (!b.dates_start) return -1
+      return new Date(a.dates_start) - new Date(b.dates_start)
+    })
+
+  const atShow        = systems.filter(s => s.location === 'At the Show').length
+  const critical      = openEntries.filter(e => e.severity === 'critical')
+  const serviceColor  = critical.length > 0 ? 'var(--red)' : openEntries.length > 0 ? 'var(--amber)' : 'var(--green)'
 
   const stats = [
-    { label: 'Total Shows',     value: shows.length,        icon: Calendar,       color: 'var(--purple)', to: '/shows'   },
-    { label: 'Upcoming',        value: upcoming.length,     icon: Truck,          color: 'var(--green)',  to: '/shows'   },
-    { label: 'Systems at Show', value: atShow,              icon: Package,        color: 'var(--accent)', to: '/systems' },
-    { label: 'TBA',             value: tba.length,          icon: Calendar,       color: 'var(--amber)',  to: '/shows'   },
-    { label: 'Open Service',    value: openEntries.length,  icon: openEntries.length > 0 ? AlertTriangle : Wrench, color: serviceColor, to: '/service', highlight: openEntries.length > 0 },
+    { label: 'Total Shows',     value: shows.length,       icon: Calendar,       color: 'var(--purple)', to: '/shows',   title: 'All shows including finished' },
+    { label: 'Upcoming',        value: upcoming.length,    icon: Truck,          color: 'var(--green)',  to: '/shows',   title: 'Active shows (excludes Finished)' },
+    { label: 'Systems at Show', value: atShow,             icon: Package,        color: 'var(--accent)', to: '/systems', title: 'Systems currently at a show' },
+    { label: 'Open Service',    value: openEntries.length, icon: openEntries.length > 0 ? AlertTriangle : Wrench, color: serviceColor, to: '/service', highlight: openEntries.length > 0, title: 'Open service requests' },
   ]
 
   return (
@@ -63,11 +81,12 @@ export default function Dashboard() {
       </div>
 
       <div className="page-body">
-        {/* Stat tiles */}
+        {/* ── Stat tiles ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
-          {stats.map(({ label, value, icon: Icon, color, to, highlight }) => (
+          {stats.map(({ label, value, icon: Icon, color, to, highlight, title }) => (
             <div key={label}
               className="card card-bd"
+              title={title}
               style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'box-shadow var(--ease)', outline: highlight ? `2px solid ${color}` : 'none' }}
               onClick={() => navigate(to)}
               onMouseOver={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
@@ -86,8 +105,30 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: openEntries.length > 0 ? '1fr 380px' : '1fr', gap: 16, alignItems: 'start' }}>
-          {/* Upcoming shows */}
+        {/* ── Status legend ── */}
+        <div className="card card-bd" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status Legend</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+            {Object.entries(STATUS_META).map(([status, meta]) => {
+              const Icon = meta.icon
+              return (
+                <div key={status} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 12px', background: meta.bg, border: `1px solid ${meta.border}`, borderRadius: 'var(--radius-sm)' }}>
+                  <Icon size={15} style={{ color: meta.color, flexShrink: 0, marginTop: 1 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: meta.color, marginBottom: 2 }}>{status}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>{meta.desc}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── Main content grid ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: openEntries.length > 0 ? '1fr 360px' : '1fr', gap: 16, alignItems: 'start' }}>
+          {/* Upcoming shows table */}
           <div className="card">
             <div className="card-hd">
               <h2 className="card-title">Upcoming Shows</h2>
@@ -98,7 +139,7 @@ export default function Dashboard() {
             <div className="card-bd" style={{ padding: '12px 20px' }}>
               {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><span className="spin" /></div>
-              ) : upcoming.length === 0 ? (
+              ) : upcomingTable.length === 0 ? (
                 <div className="empty"><div className="empty-icon">📅</div><p>No upcoming shows</p></div>
               ) : (
                 <div className="tbl-wrap">
@@ -107,12 +148,13 @@ export default function Dashboard() {
                       <tr><th>Show</th><th>Dates</th><th>Booth</th><th>Contact</th><th>Status</th><th></th></tr>
                     </thead>
                     <tbody>
-                      {upcoming.slice(0, 8).map(show => (
+                      {upcomingTable.slice(0, 8).map(show => (
                         <tr key={show.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/shows/${show.id}`)}>
                           <td><strong>{show.show_name}</strong></td>
                           <td className="muted" style={{ whiteSpace: 'nowrap' }}>
-                            {new Date(show.dates_start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            {show.dates_end ? ` – ${new Date(show.dates_end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                            {show.dates_start
+                              ? `${new Date(show.dates_start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${show.dates_end ? ` – ${new Date(show.dates_end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}`
+                              : 'TBA'}
                           </td>
                           <td className="muted">{show.booth_number || '—'}</td>
                           <td className="muted">{show.show_contact || '—'}</td>
@@ -127,7 +169,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Open service requests panel — only shows when there are open items */}
+          {/* Open service panel */}
           {openEntries.length > 0 && (
             <div className="card">
               <div className="card-hd">

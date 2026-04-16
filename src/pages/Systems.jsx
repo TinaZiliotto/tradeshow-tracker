@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Search, Package, Upload, Eye, Download, FileText, Image, File, ChevronDown, ChevronUp, Paperclip, ArrowUp, ArrowDown } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useRefreshTick } from '../context/RefreshContext'
 import { supabase, logAudit } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -240,6 +240,7 @@ export default function Systems() {
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const { isAdmin, isEditor } = useAuth()
+  const navigate = useNavigate()
   const location = useLocation()
 
   // Auto-expand a system when navigated from a show entry
@@ -362,9 +363,11 @@ export default function Systems() {
                   {filtered.map(s => (
                     <>
                       <tr key={s.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/systems/${s.id}`)}>
-                        <td onClick={e => e.stopPropagation()} style={{ color: 'var(--text-3)', cursor: 'pointer' }}
+                        <td
                           title="Expand attachments"
-                          onClick={e => { e.stopPropagation(); setExpandedId(expandedId === s.id ? null : s.id) }}>
+                          style={{ color: 'var(--text-3)', cursor: 'pointer', width: 32 }}
+                          onClick={e => { e.stopPropagation(); setExpandedId(expandedId === s.id ? null : s.id) }}
+                        >
                           {expandedId === s.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </td>
                         <td>
@@ -386,11 +389,11 @@ export default function Systems() {
                             </span>
                           )}
                         </td>
-                        {isAdmin && (
+                        {isEditor && (
                           <td onClick={e => e.stopPropagation()}>
                             <div className="row gap-2">
                               <button className="btn btn-ghost btn-sm" onClick={() => { setEditItem(s); setShowForm(true) }}><Pencil size={13} /></button>
-                              <button className="btn btn-ghost btn-sm danger" onClick={() => handleDelete(s)}><Trash2 size={13} /></button>
+                              {isAdmin && <button className="btn btn-ghost btn-sm danger" onClick={() => handleDelete(s)}><Trash2 size={13} /></button>}
                             </div>
                           </td>
                         )}
