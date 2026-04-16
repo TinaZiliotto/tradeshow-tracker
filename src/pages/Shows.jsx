@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Plus, Search, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
 import { useRefreshTick } from '../context/RefreshContext'
 import { supabase } from '../lib/supabase'
@@ -25,6 +25,11 @@ export default function Shows() {
   const [showModal, setShowModal] = useState(false)
   const { isAdmin, isEditor } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('filter') === 'upcoming' ? 'upcoming' : 'all'
+  })
 
   useEffect(() => { fetchShows() }, [tick])
 
@@ -44,8 +49,10 @@ export default function Shows() {
   const filtered = shows
     .filter(s => {
       const q = search.toLowerCase()
-      return (!q || s.show_name?.toLowerCase().includes(q) || s.show_contact?.toLowerCase().includes(q))
-        && (yearFilter === 'all' || s.year === parseInt(yearFilter))
+      const matchSearch = !q || s.show_name?.toLowerCase().includes(q) || s.show_contact?.toLowerCase().includes(q)
+      const matchYear = yearFilter === 'all' || s.year === parseInt(yearFilter)
+      const matchStatus = statusFilter === 'all' || (statusFilter === 'upcoming' && s.status !== 'Finished')
+      return matchSearch && matchYear && matchStatus
     })
     .sort((a, b) => {
       let va, vb
@@ -67,10 +74,15 @@ export default function Shows() {
       </div>
 
       <div className="page-body">
-        <div className="row gap-3" style={{ marginBottom: 14 }}>
-          <div className="search-wrap" style={{ flex: 1, maxWidth: 320 }}>
+        <div className="row gap-3" style={{ marginBottom: 14, flexWrap: 'wrap' }}>
+          <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 320 }}>
             <Search size={14} className="search-icon" />
             <input className="input" style={{ paddingLeft: 32 }} placeholder="Search shows…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <div className="row gap-2">
+            {[['all','All Shows'],['upcoming','Upcoming']].map(([val, lbl]) => (
+              <button key={val} className={`btn btn-sm ${statusFilter === val ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter(val)}>{lbl}</button>
+            ))}
           </div>
           <select className="sel" style={{ width: 140 }} value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
             <option value="all">All Years</option>

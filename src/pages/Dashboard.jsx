@@ -131,8 +131,8 @@ export default function Dashboard() {
           {/* Upcoming shows table */}
           <div className="card">
             <div className="card-hd">
-              <h2 className="card-title">Upcoming Shows</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/shows')}>
+              <h2 className="card-title">Upcoming Shows {!loading && upcomingTable.length > 0 && <span style={{ fontWeight: 400, color: 'var(--text-3)', fontSize: 12 }}>({upcomingTable.length})</span>}</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/shows?filter=upcoming')}>
                 View all <ArrowRight size={13} />
               </button>
             </div>
@@ -148,7 +148,7 @@ export default function Dashboard() {
                       <tr><th>Show</th><th>Dates</th><th>Booth</th><th>Contact</th><th>Status</th><th></th></tr>
                     </thead>
                     <tbody>
-                      {upcomingTable.slice(0, 8).map(show => (
+                      {upcomingTable.map(show => (
                         <tr key={show.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/shows/${show.id}`)}>
                           <td><strong>{show.show_name}</strong></td>
                           <td className="muted" style={{ whiteSpace: 'nowrap' }}>
