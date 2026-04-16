@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { RefreshProvider } from './context/RefreshContext'
 import Sidebar from './components/Sidebar'
@@ -12,7 +12,6 @@ import Service from './pages/Service'
 import AuditLog from './pages/AuditLog'
 import Settings from './pages/Settings'
 
-// Settings requires admin; everything else requires at least editor
 function AdminOnly({ children }) {
   const { isAdmin } = useAuth()
   return isAdmin ? children : <Navigate to="/" replace />
@@ -20,8 +19,12 @@ function AdminOnly({ children }) {
 
 function Layout() {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return <div className="load-screen"><span className="spin" /></div>
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search)
+    return <Navigate to="/login" replace />
+  }
   return (
     <div className="app-shell">
       <Sidebar />
@@ -32,7 +35,7 @@ function Layout() {
           <Route path="/shows/:id"  element={<ShowDetail />} />
           <Route path="/systems"    element={<Systems />} />
           <Route path="/systems/:id" element={<SystemDetail />} />
-          <Route path="/service"     element={<Service />} />
+          <Route path="/service"    element={<Service />} />
           <Route path="/audit"      element={<AdminOnly><AuditLog /></AdminOnly>} />
           <Route path="/settings"   element={<AdminOnly><Settings /></AdminOnly>} />
         </Routes>
@@ -44,7 +47,12 @@ function Layout() {
 function PublicOnly({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="load-screen"><span className="spin" /></div>
-  return user ? <Navigate to="/" replace /> : children
+  if (user) {
+    const dest = sessionStorage.getItem('redirectAfterLogin') || '/'
+    sessionStorage.removeItem('redirectAfterLogin')
+    return <Navigate to={dest} replace />
+  }
+  return children
 }
 
 export default function App() {
