@@ -101,8 +101,8 @@ export default function ShowDetail() {
         {tab === 'Supplies'  && <SuppliesTab   showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
         {tab === 'Brochures' && <BrochuresTab  showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
         {tab === 'Files'     && <FilesTab      showId={id} showName={show.show_name} />}
-        {tab === 'Portal'    && <PortalTab     showId={id} />}
-        {tab === 'Checklist' && <ChecklistTab  showId={id} />}
+        {tab === 'Portal'    && <PortalTab     showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
+        {tab === 'Checklist' && <ChecklistTab  showId={id} isAdmin={isAdmin} isEditor={isEditor} />}
         {tab === 'Notes'     && <NotesTab      showId={id} isEditor={isEditor} />}
       </div>
 

@@ -231,6 +231,25 @@ function ResolveForm({ entry, onClose, onSaved }) {
 function ServiceCard({ entry, showName, isEditor, isAdmin, onResolve, onDelete }) {
   const isOpen = entry.status === 'open'
   const sev = SEVERITY_STYLES[entry.severity] || SEVERITY_STYLES.cosmetic
+  const [entryFiles, setEntryFiles] = useState([])
+  const [preview, setPreview]       = useState(null)
+
+  useEffect(() => {
+    supabase.from('files')
+      .select('id, file_name, storage_path, mime_type')
+      .eq('entity_type', 'service_entry')
+      .eq('entity_id', entry.id)
+      .then(({ data }) => setEntryFiles(data || []))
+  }, [entry.id])
+
+  async function signedUrl(storagePath) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 300)
+    return data?.signedUrl
+  }
+  async function handleImgPreview(file) {
+    const url = await signedUrl(file.storage_path)
+    if (url) setPreview({ file, url })
+  }
 
   return (
     <div style={{
