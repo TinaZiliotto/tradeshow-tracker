@@ -1,26 +1,50 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, X, CheckSquare } from 'lucide-react'
-import { useRefreshTick } from '../../context/RefreshContext'
 import { supabase, logAudit } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
 export default function ChecklistTab({ showId, isAdmin, isEditor }) {
-  const tick = useRefreshTick()
-  const [items, setItems] = useState([])
-  const [submitted, setSubmitted] = useState(false)
+  const [items, setItems]           = useState([])
+  const [submitted, setSubmitted]   = useState(false)
   const [submittedBy, setSubmittedBy] = useState('')
   const [submittedAt, setSubmittedAt] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState('')
-  const [newLabel, setNewLabel] = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [saving, setSaving]         = useState(false)
+  const [saveMsg, setSaveMsg]       = useState('')
+  const [newLabel, setNewLabel]     = useState('')
   const { user } = useAuth()
-  // Track whether a DB row exists yet
-  const hasRow = useRef(false)
 
-  useEffect(() => { init() }, [showId, tick])
+  // isDirty: user has ticked/unticked something not yet saved
+  const isDirty = useRef(false)
+  const hasRow  = useRef(false)
 
-  async function init() {
+  useEffect(() => {
+    // Initial load
+    loadChecklist()
+
+    // Realtime subscription — only apply if user has no unsaved changes
+    const channel = supabase
+      .channel(`show_checklists:${showId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'show_checklists',
+        filter: `tradeshow_id=eq.${showId}`,
+      }, payload => {
+        if (!isDirty.current && payload.new) {
+          hasRow.current = true
+          setItems(payload.new.items || [])
+          setSubmitted(payload.new.submitted || false)
+          setSubmittedBy(payload.new.submitted_by || '')
+          setSubmittedAt(payload.new.submitted_at || '')
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [showId])
+
+  async function loadChecklist() {
     const { data: cl } = await supabase.from('show_checklists')
       .select('*').eq('tradeshow_id', showId).maybeSingle()
 
@@ -34,24 +58,18 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
       hasRow.current = false
       const { data: defaults } = await supabase.from('dropdown_options')
         .select('value').eq('category', 'checklist_item').order('sort_order')
-      const seeded = (defaults || []).map((d, i) => ({
+      setItems((defaults || []).map((d, i) => ({
         id: crypto.randomUUID(), label: d.value, checked: false, sort_order: i
-      }))
-      setItems(seeded)
+      })))
     }
     setLoading(false)
   }
 
-  // Persist current items to DB immediately — called after any structural change
   async function persistItems(newItems) {
-    const now = new Date().toISOString()
     const payload = {
-      tradeshow_id: showId,
-      items: newItems,
-      submitted,
-      submitted_by: submittedBy,
-      submitted_at: submittedAt || null,
-      updated_at: now,
+      tradeshow_id: showId, items: newItems, submitted,
+      submitted_by: submittedBy, submitted_at: submittedAt || null,
+      updated_at: new Date().toISOString(),
     }
     if (hasRow.current) {
       await supabase.from('show_checklists').update(payload).eq('tradeshow_id', showId)
@@ -59,18 +77,18 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
       const { error } = await supabase.from('show_checklists').insert(payload)
       if (!error) hasRow.current = true
     }
+    isDirty.current = false
   }
 
   async function saveChecklist(submitNow = false) {
     setSaving(true)
     const now = new Date().toISOString()
     const payload = {
-      tradeshow_id: showId,
-      items,
-      submitted: submitNow ? true : submitted,
+      tradeshow_id: showId, items,
+      submitted:    submitNow ? true : submitted,
       submitted_by: submitNow ? user.email : submittedBy,
       submitted_at: submitNow ? now : (submittedAt || null),
-      updated_at: now,
+      updated_at:   now,
     }
     if (hasRow.current) {
       await supabase.from('show_checklists').update(payload).eq('tradeshow_id', showId)
@@ -78,10 +96,9 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
       await supabase.from('show_checklists').insert(payload)
       hasRow.current = true
     }
+    isDirty.current = false
     if (submitNow) {
-      setSubmitted(true)
-      setSubmittedBy(user.email)
-      setSubmittedAt(now)
+      setSubmitted(true); setSubmittedBy(user.email); setSubmittedAt(now)
       await logAudit({ action: 'update', entityType: 'checklist', entityId: showId, entityLabel: 'Checklist submitted', newValue: { submitted_by: user.email } })
     } else {
       setSaveMsg('Saved')
@@ -92,30 +109,28 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
 
   function toggleItem(id) {
     if (submitted) return
+    isDirty.current = true
     setItems(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item))
   }
 
   async function addItem(e) {
     e.preventDefault()
     if (!newLabel.trim()) return
-    const newItem = { id: crypto.randomUUID(), label: newLabel.trim(), checked: false, sort_order: items.length }
-    const updated = [...items, newItem]
+    const updated = [...items, { id: crypto.randomUUID(), label: newLabel.trim(), checked: false, sort_order: items.length }]
     setItems(updated)
     setNewLabel('')
-    // Immediately persist so navigation away does not lose the new item
     await persistItems(updated)
   }
 
   async function removeItem(id) {
     const updated = items.filter(item => item.id !== id)
     setItems(updated)
-    // Immediately persist
     await persistItems(updated)
   }
 
-  const total = items.length
+  const total   = items.length
   const checked = items.filter(i => i.checked).length
-  const pct = total > 0 ? Math.round((checked / total) * 100) : 0
+  const pct     = total > 0 ? Math.round((checked / total) * 100) : 0
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><span className="spin" /></div>
 
@@ -141,39 +156,18 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {items.map(item => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '9px 12px', borderRadius: 'var(--radius-sm)',
-                    background: item.checked ? 'rgba(26,122,80,0.05)' : 'var(--surface-2)',
-                    border: `1px solid ${item.checked ? 'rgba(26,122,80,0.15)' : 'var(--border)'}`,
-                    cursor: submitted ? 'default' : 'pointer',
-                    transition: 'all var(--ease)',
-                    opacity: submitted && !item.checked ? 0.6 : 1,
-                  }}
+                <div key={item.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: item.checked ? 'rgba(26,122,80,0.05)' : 'var(--surface-2)', border: `1px solid ${item.checked ? 'rgba(26,122,80,0.15)' : 'var(--border)'}`, cursor: submitted ? 'default' : 'pointer', transition: 'all var(--ease)', opacity: submitted && !item.checked ? 0.6 : 1 }}
                   onClick={() => toggleItem(item.id)}
                 >
-                  <div style={{
-                    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                    border: `2px solid ${item.checked ? 'var(--green)' : 'var(--border)'}`,
-                    background: item.checked ? 'var(--green)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all var(--ease)',
-                  }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 4, flexShrink: 0, border: `2px solid ${item.checked ? 'var(--green)' : 'var(--border)'}`, background: item.checked ? 'var(--green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all var(--ease)' }}>
                     {item.checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
                   <span style={{ fontSize: 13, flex: 1, textDecoration: item.checked ? 'line-through' : 'none', color: item.checked ? 'var(--text-3)' : 'var(--text-1)' }}>
                     {item.label}
                   </span>
                   {isAdmin && !submitted && (
-                    <button
-                      className="btn btn-ghost btn-sm danger"
-                      onClick={e => { e.stopPropagation(); removeItem(item.id) }}
-                      style={{ opacity: 0.5 }}
-                      onMouseOver={e => e.currentTarget.style.opacity = '1'}
-                      onMouseOut={e => e.currentTarget.style.opacity = '0.5'}
-                    >
+                    <button className="btn btn-ghost btn-sm danger" onClick={e => { e.stopPropagation(); removeItem(item.id) }} style={{ opacity: 0.5 }} onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0.5'}>
                       <X size={12} />
                     </button>
                   )}
@@ -184,12 +178,7 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
 
           {isAdmin && !submitted && (
             <form onSubmit={addItem} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <input
-                className="input"
-                value={newLabel}
-                onChange={e => setNewLabel(e.target.value)}
-                placeholder="Add checklist item…"
-              />
+              <input className="input" value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Add checklist item…" />
               <button type="submit" className="btn btn-secondary btn-sm" disabled={!newLabel.trim()} style={{ flexShrink: 0 }}>
                 <Plus size={13} /> Add
               </button>
@@ -213,17 +202,13 @@ export default function ChecklistTab({ showId, isAdmin, isEditor }) {
           <button className="btn btn-secondary" onClick={() => saveChecklist(false)} disabled={saving}>
             {saving ? <span className="spin" /> : 'Save Progress'}
           </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              if (!confirm('Submit the checklist? This cannot be undone — the checklist will be locked.')) return
-              saveChecklist(true)
-            }}
-            disabled={saving || items.length === 0}
-          >
+          <button className="btn btn-primary" onClick={() => { if (!confirm('Submit the checklist? This cannot be undone — the checklist will be locked.')) return; saveChecklist(true) }} disabled={saving || items.length === 0}>
             {saving ? <span className="spin spin-white" /> : 'Save & Submit'}
           </button>
           {saveMsg && <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>✓ {saveMsg}</span>}
+          {isDirty.current && !saving && !saveMsg && (
+            <span style={{ fontSize: 12, color: 'var(--amber)' }}>Unsaved changes — press Save Progress</span>
+          )}
         </div>
       )}
     </div>

@@ -1,18 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useRefreshTick } from '../../context/RefreshContext'
 
 export default function NotesTab({ showId, isEditor }) {
-  const tick = useRefreshTick()
-  const [notes, setNotes]   = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved]   = useState(false)
+  const [notes, setNotes]     = useState('')
+  const [saving, setSaving]   = useState(false)
+  const [saved, setSaved]     = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // isDirty: user has typed something that has not been saved yet
+  const isDirty    = useRef(false)
+  // savedNotes: last value that came from the DB — used to detect external changes
+  const savedNotes = useRef('')
+
   useEffect(() => {
+    // Initial load
     supabase.from('show_notes').select('notes').eq('tradeshow_id', showId).maybeSingle()
-      .then(({ data }) => { setNotes(data?.notes || ''); setLoading(false) })
-  }, [showId, tick])
+      .then(({ data }) => {
+        const val = data?.notes || ''
+        setNotes(val)
+        savedNotes.current = val
+        setLoading(false)
+      })
+
+    // Realtime subscription — only update if user has no unsaved changes
+    const channel = supabase
+      .channel(`show_notes:${showId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'show_notes',
+        filter: `tradeshow_id=eq.${showId}`,
+      }, payload => {
+        const incoming = payload.new?.notes ?? ''
+        // Only apply if user has not started typing unsaved content
+        if (!isDirty.current) {
+          setNotes(incoming)
+          savedNotes.current = incoming
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [showId])
+
+  function handleChange(e) {
+    isDirty.current = true
+    setNotes(e.target.value)
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -23,7 +57,10 @@ export default function NotesTab({ showId, isEditor }) {
     } else {
       await supabase.from('show_notes').insert({ tradeshow_id: showId, notes })
     }
-    setSaving(false); setSaved(true)
+    savedNotes.current = notes
+    isDirty.current = false
+    setSaving(false)
+    setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
@@ -37,7 +74,7 @@ export default function NotesTab({ showId, isEditor }) {
           <textarea
             className="ta"
             value={notes}
-            onChange={e => setNotes(e.target.value)}
+            onChange={handleChange}
             readOnly={!isEditor}
             rows={12}
             placeholder={isEditor ? 'Add notes for this show…' : 'No notes yet.'}
@@ -50,6 +87,9 @@ export default function NotesTab({ showId, isEditor }) {
               {saving ? <span className="spin spin-white" /> : 'Save Notes'}
             </button>
             {saved && <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>✓ Saved</span>}
+            {isDirty.current && !saving && (
+              <span style={{ fontSize: 12, color: 'var(--amber)' }}>Unsaved changes</span>
+            )}
           </div>
         )}
       </div>

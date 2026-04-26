@@ -6,7 +6,10 @@ export function RefreshProvider({ children }) {
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 15000)
+    // 30-second interval — only used for list pages (Dashboard, Shows, Systems, Service).
+    // Checklist and Notes use their own Realtime subscriptions and do NOT consume this tick,
+    // so this interval never touches user-editable text.
+    const id = setInterval(() => setTick(t => t + 1), 30000)
     return () => clearInterval(id)
   }, [])
 
@@ -17,5 +20,4 @@ export function RefreshProvider({ children }) {
   )
 }
 
-// Hook used in every page/tab to trigger re-fetch
 export const useRefreshTick = () => useContext(RefreshContext)
