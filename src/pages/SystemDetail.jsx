@@ -73,9 +73,18 @@ function PreviewModal({ file, url, onClose }) {
 function ServiceEntryForm({ systemId, shows, severities, onClose, onSaved }) {
   const { user } = useAuth()
   const [form, setForm] = useState({ description: '', severity: severities[0] || 'cosmetic', show_id: '' })
+  const [pendingFiles, setPendingFiles] = useState([])  // files staged before save
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const imgRef = useRef(null)
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))
+
+  function handleFileStage(e) {
+    const newFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/') || f.type === 'application/pdf')
+    setPendingFiles(prev => [...prev, ...newFiles])
+    e.target.value = ''
+  }
+  function removeStaged(idx) { setPendingFiles(prev => prev.filter((_, i) => i !== idx)) }
 
   async function handleSave(e) {
     e.preventDefault()
@@ -91,6 +100,20 @@ function ServiceEntryForm({ systemId, shows, severities, onClose, onSaved }) {
       reported_at: new Date().toISOString(),
     }).select().single()
     if (error) { setError(error.message); setSaving(false); return }
+
+    // Upload any staged images — store as entity_type 'service_entry'
+    for (const f of pendingFiles) {
+      const path = `service/${data.id}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f)
+      if (upErr) continue
+      await supabase.from('files').insert({
+        entity_type: 'service_entry', entity_id: data.id,
+        file_name: f.name, storage_path: path,
+        mime_type: f.type, size_bytes: f.size,
+        uploaded_by: user.id, uploader_email: user.email,
+      })
+    }
+
     await logAudit({ action: 'create', entityType: 'service_entry', entityId: data.id, entityLabel: form.severity, newValue: form })
     onSaved()
   }
@@ -119,8 +142,27 @@ function ServiceEntryForm({ systemId, shows, severities, onClose, onSaved }) {
             </div>
             <div className="field">
               <label className="lbl">Description *</label>
-              <textarea className="ta" rows={5} value={form.description} onChange={set('description')}
+              <textarea className="ta" rows={4} value={form.description} onChange={set('description')}
                 placeholder="Describe the issue in detail — what was found, where, and any relevant context…" />
+            </div>
+            <div className="field">
+              <label className="lbl">Attach Images / Photos (optional)</label>
+              <input ref={imgRef} type="file" multiple accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFileStage} />
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => imgRef.current?.click()}>
+                <Image size={13} /> Add Photos or Files
+              </button>
+              {pendingFiles.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8 }}>
+                  {pendingFiles.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+                      {f.type.startsWith('image/') ? <Image size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} /> : <FileText size={13} style={{ color: 'var(--red)', flexShrink: 0 }} />}
+                      <span style={{ fontSize: 12, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '2px 4px' }} onClick={() => removeStaged(i)}><X size={12} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4, lineHeight: 1.5 }}>Images will be stored with this service request and only visible when viewing it.</p>
             </div>
             {error && <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
           </div>
@@ -229,14 +271,39 @@ function ServiceCard({ entry, showName, isEditor, isAdmin, onResolve, onDelete }
         </div>
       )}
 
+      {/* Attached images/files - only visible when viewing this service entry */}
+      {entryFiles.length > 0 && (
+        <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {entryFiles.map(f => (
+            f.mime_type?.startsWith('image/')
+              ? <div key={f.id}
+                  style={{ width: 80, height: 80, borderRadius: 6, overflow: 'hidden', cursor: 'pointer', border: '1px solid var(--border)', flexShrink: 0, background: 'var(--surface-2)' }}
+                  onClick={() => handleImgPreview(f)}>
+                  <ServiceImage file={f} signedUrl={signedUrl} />
+                </div>
+              : <button key={f.id} className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={() => handleImgPreview(f)}>
+                  <FileText size={12} /> {f.file_name}
+                </button>
+          ))}
+        </div>
+      )}
       <div style={{ marginTop: 10, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Reported by {entry.reported_by} · {fmtDateTime(entry.reported_at)}</span>
         {!isOpen && entry.resolved_by && (
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Resolved by {entry.resolved_by} · {fmtDateTime(entry.resolved_at)}</span>
         )}
       </div>
+      {preview && <PreviewModal file={preview.file} url={preview.url} onClose={() => setPreview(null)} />}
     </div>
   )
+}
+
+// Lazy-loading image component for service entry attachments
+function ServiceImage({ file, signedUrl }) {
+  const [src, setSrc] = useState(null)
+  useEffect(() => { signedUrl(file.storage_path).then(u => u && setSrc(u)) }, [file.id])
+  if (!src) return <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="spin" style={{ width: 16, height: 16 }} /></div>
+  return <img src={src} alt={file.file_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 }
 
 // ─── Files section ────────────────────────────────────────────────────────

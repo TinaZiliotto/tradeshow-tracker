@@ -49,19 +49,19 @@ function ShipForm({ showId, item, onClose, onSaved }) {
   )
 }
 
-function ShipSection({ title, rows, isAdmin, onEdit, onDelete }) {
+function ShipSection({ title, rows, isAdmin, isEditor, onEdit, onDelete }) {
   return (
     <div className="card mb-3" style={{ marginBottom: 14 }}>
       <div className="card-hd"><h3 className="card-title">{title}</h3></div>
       <div className="card-bd" style={{ padding: '12px 20px' }}>
         {rows.length === 0 ? <p className="muted" style={{ fontSize:13 }}>None recorded.</p> : (
           <div className="tbl-wrap"><table>
-            <thead><tr><th>Ship Date</th><th>Notes</th>{isAdmin && <th></th>}</tr></thead>
+            <thead><tr><th>Ship Date</th><th>Notes</th>{(isAdmin || isEditor) && <th></th>}</tr></thead>
             <tbody>{rows.map(r => (
               <tr key={r.id}>
                 <td>{r.ship_date ? new Date(r.ship_date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—'}</td>
                 <td className="muted">{r.notes || '—'}</td>
-                {isAdmin && <td><div className="row gap-2">
+                {(isAdmin || isEditor) && <td><div className="row gap-2">
                   <button className="btn btn-ghost btn-sm" onClick={() => onEdit(r)}><Pencil size={13} /></button>
                   <button className="btn btn-ghost btn-sm danger" onClick={() => onDelete(r)}><Trash2 size={13} /></button>
                 </div></td>}
@@ -99,9 +99,9 @@ export default function ShippingTab({ showId, isAdmin, isEditor }) {
 
   return (
     <div>
-      {isAdmin && <div style={{ marginBottom: 14 }}><button className="btn btn-primary btn-sm" onClick={() => { setEditItem(null); setShowForm(true) }}><Plus size={14} /> Add Shipment</button></div>}
-      <ShipSection title="Pre-Show" rows={items.filter(i => i.direction === 'pre-show')} isAdmin={isAdmin} onEdit={i => { setEditItem(i); setShowForm(true) }} onDelete={handleDelete} />
-      <ShipSection title="Post-Show" rows={items.filter(i => i.direction === 'post-show')} isAdmin={isAdmin} onEdit={i => { setEditItem(i); setShowForm(true) }} onDelete={handleDelete} />
+      {(isAdmin || isEditor) && <div style={{ marginBottom: 14 }}><button className="btn btn-primary btn-sm" onClick={() => { setEditItem(null); setShowForm(true) }}><Plus size={14} /> Add Shipment</button></div>}
+      <ShipSection title="Pre-Show" rows={items.filter(i => i.direction === 'pre-show')} isAdmin={isAdmin} isEditor={isEditor} onEdit={i => { setEditItem(i); setShowForm(true) }} onDelete={handleDelete} />
+      <ShipSection title="Post-Show" rows={items.filter(i => i.direction === 'post-show')} isAdmin={isAdmin} isEditor={isEditor} onEdit={i => { setEditItem(i); setShowForm(true) }} onDelete={handleDelete} />
       {showForm && <ShipForm showId={showId} item={editItem} onClose={() => { setShowForm(false); setEditItem(null) }} onSaved={() => { setShowForm(false); setEditItem(null); fetch() }} />}
     </div>
   )

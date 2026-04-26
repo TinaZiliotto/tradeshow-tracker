@@ -61,7 +61,7 @@ function PortalForm({ showId, item, onClose, onSaved }) {
   )
 }
 
-function PortalCard({ entry, isAdmin, onEdit, onDelete }) {
+function PortalCard({ entry, isAdmin, isEditor, onEdit, onDelete }) {
   const [showPw, setShowPw] = useState(false)
   const [copied, setCopied] = useState(null)
   function copy(text, key) { navigator.clipboard.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 2000) }) }
@@ -76,10 +76,8 @@ function PortalCard({ entry, isAdmin, onEdit, onDelete }) {
         </div>
         <div className="row gap-2">
           {entry.url && <a href={entry.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" title="Open"><ExternalLink size={13} /></a>}
-          {isAdmin && <>
-            <button className="btn btn-ghost btn-sm" onClick={() => onEdit(entry)}><Pencil size={13} /></button>
-            <button className="btn btn-ghost btn-sm danger" onClick={() => onDelete(entry)}><Trash2 size={13} /></button>
-          </>}
+          {(isAdmin || isEditor) && <button className="btn btn-ghost btn-sm" onClick={() => onEdit(entry)}><Pencil size={13} /></button>}
+          {isAdmin && <button className="btn btn-ghost btn-sm danger" onClick={() => onDelete(entry)}><Trash2 size={13} /></button>}
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -160,11 +158,11 @@ export default function PortalTab({ showId, isAdmin, isEditor }) {
             </button>
           ))}
         </div>
-        {isAdmin && <button className="btn btn-primary btn-sm" onClick={() => { setEditItem(null); setShowForm(true) }}><Plus size={13}/> Add Entry</button>}
+        {(isAdmin || isEditor) && <button className="btn btn-primary btn-sm" onClick={() => { setEditItem(null); setShowForm(true) }}><Plus size={13}/> Add Entry</button>}
       </div>
       {filtered.length === 0
         ? <div className="card"><div className="empty"><div className="empty-icon"><KeyRound size={26}/></div><p>{entries.length===0?'No portal entries yet':'No entries for this type'}</p></div></div>
-        : filtered.map(e => <PortalCard key={e.id} entry={e} isAdmin={isAdmin} onEdit={i=>{setEditItem(i);setShowForm(true)}} onDelete={handleDelete} />)
+        : filtered.map(e => <PortalCard key={e.id} entry={e} isAdmin={isAdmin} isEditor={isEditor} onEdit={i=>{setEditItem(i);setShowForm(true)}} onDelete={handleDelete} />)
       }
       {showForm && <PortalForm showId={showId} item={editItem} onClose={()=>{setShowForm(false);setEditItem(null)}} onSaved={()=>{setShowForm(false);setEditItem(null);fetch()}} />}
     </div>
