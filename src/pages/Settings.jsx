@@ -15,6 +15,7 @@ const DROPDOWN_SECTIONS = [
   { key: 'brochure_item',    label: 'Brochure Names',            desc: 'Default brochures added to every new show.' },
   { key: 'checklist_item',   label: 'Checklist Items',           desc: 'Default checklist tasks for each show.' },
   { key: 'service_severity',  label: 'Service Issue Severities',  desc: 'Severity levels for system service log entries.' },
+  { key: 'file_folder',       label: 'Show File Folders',          desc: 'Folder categories shown in the Files tab of each show. "Other" is always the catch-all.' },
 ]
 
 function DropSection({ category, label, desc }) {
